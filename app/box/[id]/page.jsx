@@ -206,7 +206,7 @@ function BandsTab({ box, bands, setBands, isAdmin, userId }) {
 export default function BoxDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
 
   const [box, setBox] = useState(null);
   const [bands, setBands] = useState([]);
@@ -215,9 +215,14 @@ export default function BoxDetailPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!authLoading && !user) router.replace("/");
+  }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!user) return;
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [id, user]);
 
   async function loadAll() {
     setLoading(true);
@@ -247,7 +252,7 @@ export default function BoxDetailPage() {
 
   const isAdmin = box?.owner_id === user?.id;
 
-  if (loading || !box) {
+  if (authLoading || !user || loading || !box) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: pal.bg }}>
         <p className="font-mono text-sm" style={{ color: pal.creamDim }}>Carregando box...</p>

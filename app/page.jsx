@@ -28,6 +28,14 @@ export default function LandingPage() {
     if (!loading && user) router.replace("/home");
   }, [loading, user, router]);
 
+  if (loading || user) {
+    return (
+      <div className="min-h-screen w-full flex items-center justify-center" style={{ background: pal.bg }}>
+        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>A carregar…</p>
+      </div>
+    );
+  }
+
   const submitEmail = async () => {
     if (!email || !password) return;
     setSubmitting(true);

@@ -59,12 +59,16 @@ function BoxCard({ box, isOwner, onOpen }) {
 }
 
 export default function HomePage() {
-  const { user, logout } = useAuth();
+  const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const [boxes, setBoxes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [needsProfile, setNeedsProfile] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/");
+  }, [authLoading, user, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -118,6 +122,14 @@ export default function HomePage() {
   };
 
   const firstName = (user?.user_metadata?.full_name || user?.email || "").split(" ")[0] || "";
+
+  if (authLoading || !user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center" style={{ background: pal.bg }}>
+        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>A carregar…</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen w-full" style={{ background: pal.bg }}>
