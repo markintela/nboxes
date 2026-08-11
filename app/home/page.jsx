@@ -6,6 +6,7 @@ import { Plus, Guitar, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { pal } from "@/lib/theme";
 import { AppHeader, AmberButton } from "@/components/Chrome";
+import { LogoBadge, NBoxIcon } from "@/components/Logo";
 import { CreateBoxDialog } from "@/components/dialogs/CreateBoxDialog";
 import { CompleteProfileDialog } from "@/components/dialogs/CompleteProfileDialog";
 import { useAuth } from "@/hooks/useAuth";
@@ -27,7 +28,10 @@ function BoxCard({ box, onOpen }) {
             BOX {box.box_number || "—"}
           </Badge>
         </div>
-        <h3 className="font-display font-bold text-2xl mt-2" style={{ color: pal.cream }}>{box.box_name}</h3>
+        <div className="flex items-center gap-2 mt-2">
+          <NBoxIcon size={26} />
+          <h3 className="font-display font-bold text-2xl" style={{ color: pal.cream }}>{box.box_name}</h3>
+        </div>
         <p className="font-body text-xs mt-1" style={{ color: pal.creamDim }}>{box.complex_name}</p>
         <div className="flex items-center gap-4 mt-4">
           <span className="flex items-center gap-1.5 font-mono text-xs" style={{ color: pal.creamDim }}>
@@ -125,6 +129,16 @@ export default function HomePage() {
 
         {loading ? (
           <p className="font-mono text-sm mt-10" style={{ color: pal.creamDim }}>Carregando boxes...</p>
+        ) : boxes.length === 0 ? (
+          <div className="flex flex-col items-center text-center py-16">
+            <LogoBadge size={120} />
+            <p className="font-body text-sm mt-4 max-w-sm" style={{ color: pal.creamDim }}>
+              Ainda não tens nenhuma box cadastrada. Cria a primeira para começar a agendar ensaios e dividir despesas.
+            </p>
+            <AmberButton icon={Plus} onClick={() => setDialogOpen(true)} className="mt-6">
+              Cadastrar nova box
+            </AmberButton>
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
             {boxes.map((box) => (

@@ -1,152 +1,21 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Plus, Guitar, ChevronLeft, ChevronRight, Crown, Building2, CircleUserRound,
-  CalendarDays, Wallet, Users,
+  Plus, Guitar, Crown, Building2, CircleUserRound,
+  CalendarDays, Wallet, Users, UserPlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { pal, TYPE_META, SCOPE_META, EXP_META, MONTH_NAMES, WEEK_DAYS, monthMatrix, computeSplit, fmtBRL } from "@/lib/theme";
+import { pal, EXP_META, computeSplit, fmtBRL } from "@/lib/theme";
 import { AppHeader, AmberButton, TicketDivider } from "@/components/Chrome";
-import { ScheduleDialog } from "@/components/dialogs/ScheduleDialog";
+import { AgendaTab } from "@/components/AgendaTab";
 import { AddExpenseDialog, AddBandDialog, AddMemberDialog } from "@/components/dialogs/OtherDialogs";
+import { InviteMemberDialog } from "@/components/dialogs/InviteMemberDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
-
-const now = new Date();
-
-/* ----------------------------- AGENDA TAB ----------------------------- */
-function AgendaTab({ box, bands, schedule, setSchedule }) {
-  const [cursor, setCursor] = useState({ year: now.getFullYear(), month: now.getMonth() });
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [pickedDay, setPickedDay] = useState(now.getDate());
-
-  const cells = useMemo(() => monthMatrix(cursor.year, cursor.month), [cursor]);
-  const bandName = (id) => bands.find((b) => b.id === id)?.name || "—";
-  const memberName = (id) => bands.flatMap((b) => b.members).find((m) => m.id === id)?.name || "—";
-  const eventsForMonth = schedule.filter((s) => s.month === cursor.month && s.year === cursor.year);
-
-  const changeMonth = (delta) => {
-    let m = cursor.month + delta;
-    let y = cursor.year;
-    if (m < 0) { m = 11; y -= 1; }
-    if (m > 11) { m = 0; y += 1; }
-    setCursor({ year: y, month: m });
-  };
-
-  const openDialogFor = (day) => { setPickedDay(day); setDialogOpen(true); };
-
-  return (
-    <div className="flex flex-col" style={{ minHeight: "70vh" }}>
-      <div className="flex items-center justify-between px-1 py-4 flex-wrap gap-3">
-        <div className="flex items-center gap-3">
-          <button onClick={() => changeMonth(-1)} className="p-1.5 rounded-sm border hover:brightness-125" style={{ borderColor: pal.line, color: pal.cream }}>
-            <ChevronLeft size={16} />
-          </button>
-          <h2 className="font-display font-bold text-2xl" style={{ color: pal.cream }}>
-            {MONTH_NAMES[cursor.month]} <span style={{ color: pal.amber }}>{cursor.year}</span>
-          </h2>
-          <button onClick={() => changeMonth(1)} className="p-1.5 rounded-sm border hover:brightness-125" style={{ borderColor: pal.line, color: pal.cream }}>
-            <ChevronRight size={16} />
-          </button>
-        </div>
-        <AmberButton icon={Plus} onClick={() => openDialogFor(now.getDate())}>Agendar</AmberButton>
-      </div>
-
-      <div className="grid grid-cols-7 border-t border-l flex-1" style={{ borderColor: pal.line }}>
-        {WEEK_DAYS.map((d, i) => (
-          <div key={i} className="font-mono text-[11px] text-center py-2 border-r border-b" style={{ borderColor: pal.line, color: pal.brass, background: pal.panel }}>
-            {d}
-          </div>
-        ))}
-        {cells.map((day, idx) => {
-          const events = day ? eventsForMonth.filter((s) => s.day === day) : [];
-          const isToday = day === now.getDate() && cursor.month === now.getMonth() && cursor.year === now.getFullYear();
-          return (
-            <div
-              key={idx}
-              onClick={() => day && openDialogFor(day)}
-              className="border-r border-b p-1.5 flex flex-col gap-1 min-h-[92px] md:min-h-[120px]"
-              style={{ borderColor: pal.line, background: day ? (isToday ? pal.amberSoft : pal.bg) : pal.lineSoft, cursor: day ? "pointer" : "default" }}
-            >
-              {day && (
-                <>
-                  <span className="font-mono text-xs" style={{ color: isToday ? pal.amber : pal.creamDim }}>
-                    {String(day).padStart(2, "0")}
-                  </span>
-                  <div className="flex flex-col gap-1 overflow-hidden">
-                    {events.slice(0, 3).map((ev) => {
-                      const meta = TYPE_META[ev.type] || TYPE_META.Outros;
-                      const Icon = meta.icon;
-                      const scopeMeta = SCOPE_META[ev.scope] || SCOPE_META.banda;
-                      const ScopeIcon = scopeMeta.icon;
-                      const who =
-                        ev.scope === "individual" ? memberName(ev.member_id) :
-                        ev.scope === "convidado" ? (ev.guest_name || "Convidado") :
-                        bandName(ev.band_id);
-                      const timeRange = ev.end_time ? `${ev.time}–${ev.end_time}` : ev.time;
-                      return (
-                        <div
-                          key={ev.id}
-                          className="rounded-sm px-1.5 py-0.5 overflow-hidden"
-                          style={{ background: meta.soft }}
-                          title={`${ev.name} · ${scopeMeta.label}: ${who} · ${timeRange}`}
-                        >
-                          <div className="flex items-center gap-1">
-                            <Icon size={10} style={{ color: meta.color, flexShrink: 0 }} />
-                            <span className="font-mono text-[10px] truncate flex-1" style={{ color: meta.color }}>{timeRange} {ev.name}</span>
-                          </div>
-                          <div className="flex items-center gap-1 mt-0.5">
-                            <span
-                              className="flex items-center gap-1 rounded-sm px-1 py-[1px] font-mono text-[9px] truncate font-semibold"
-                              style={{ background: scopeMeta.soft, color: scopeMeta.color }}
-                            >
-                              <ScopeIcon size={9} style={{ flexShrink: 0 }} /> {who}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-4 mt-4 px-1">
-        {Object.entries(TYPE_META).map(([label, meta]) => (
-          <span key={label} className="flex items-center gap-1.5 font-mono text-[11px]" style={{ color: pal.creamDim }}>
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} /> {label}
-          </span>
-        ))}
-        <span className="w-px h-3" style={{ background: pal.line }} />
-        {Object.entries(SCOPE_META).map(([key, meta]) => {
-          const Icon = meta.icon;
-          return (
-            <span key={key} className="flex items-center gap-1.5 font-mono text-[11px]" style={{ color: meta.color }}>
-              <Icon size={11} /> {meta.label}
-            </span>
-          );
-        })}
-      </div>
-
-      <ScheduleDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        box={box}
-        bands={bands}
-        defaultDay={pickedDay}
-        cursor={cursor}
-        onCreated={(item) => setSchedule((prev) => [...prev, item])}
-      />
-    </div>
-  );
-}
 
 /* --------------------------- FINANCEIRO TAB --------------------------- */
 function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
@@ -226,10 +95,17 @@ function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
 }
 
 /* ------------------------------ BANDAS TAB ----------------------------- */
-function BandsTab({ box, bands, setBands, isAdmin }) {
+function BandsTab({ box, bands, setBands, isAdmin, userId }) {
   const [bandDialogOpen, setBandDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [activeBand, setActiveBand] = useState(null);
+  const [inviteDialogOpen, setInviteDialogOpen] = useState(false);
+  const [inviteTarget, setInviteTarget] = useState({ band: null, member: null });
+
+  const openInvite = (band, member) => {
+    setInviteTarget({ band, member });
+    setInviteDialogOpen(true);
+  };
 
   const toggleAdmin = async (bandId, memberId, current) => {
     const supabase = createClient();
@@ -267,19 +143,30 @@ function BandsTab({ box, bands, setBands, isAdmin }) {
                   <span className="flex items-center gap-2 font-body text-sm" style={{ color: pal.cream }}>
                     <CircleUserRound size={15} style={{ color: pal.creamDim }} /> {m.name}
                   </span>
-                  <button
-                    disabled={!isAdmin}
-                    onClick={() => toggleAdmin(band.id, m.id, m.is_admin)}
-                    className="flex items-center gap-1 font-mono text-[11px] px-2 py-1 rounded-sm"
-                    style={{
-                      color: m.is_admin ? pal.amber : pal.creamDim,
-                      background: m.is_admin ? pal.amberSoft : "transparent",
-                      opacity: isAdmin ? 1 : 0.5,
-                      cursor: isAdmin ? "pointer" : "not-allowed",
-                    }}
-                  >
-                    <Crown size={12} /> {m.is_admin ? "Admin" : "Membro"}
-                  </button>
+                  <div className="flex items-center gap-2">
+                    {!m.user_id && isAdmin && (
+                      <button
+                        onClick={() => openInvite(band, m)}
+                        className="flex items-center gap-1 font-mono text-[11px] px-2 py-1 rounded-sm hover:brightness-125"
+                        style={{ color: pal.teal, background: pal.tealSoft }}
+                      >
+                        <UserPlus size={12} /> Convidar
+                      </button>
+                    )}
+                    <button
+                      disabled={!isAdmin}
+                      onClick={() => toggleAdmin(band.id, m.id, m.is_admin)}
+                      className="flex items-center gap-1 font-mono text-[11px] px-2 py-1 rounded-sm"
+                      style={{
+                        color: m.is_admin ? pal.amber : pal.creamDim,
+                        background: m.is_admin ? pal.amberSoft : "transparent",
+                        opacity: isAdmin ? 1 : 0.5,
+                        cursor: isAdmin ? "pointer" : "not-allowed",
+                      }}
+                    >
+                      <Crown size={12} /> {m.is_admin ? "Admin" : "Membro"}
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -302,6 +189,14 @@ function BandsTab({ box, bands, setBands, isAdmin }) {
         onCreated={(bandId, member) =>
           setBands((prev) => prev.map((b) => (b.id === bandId ? { ...b, members: [...b.members, member] } : b)))
         }
+      />
+      <InviteMemberDialog
+        open={inviteDialogOpen}
+        onOpenChange={setInviteDialogOpen}
+        box={box}
+        band={inviteTarget.band}
+        member={inviteTarget.member}
+        userId={userId}
       />
     </div>
   );
@@ -400,7 +295,7 @@ export default function BoxDetailPage() {
             <FinanceiroTab box={box} bands={bands} expenses={expenses} setExpenses={setExpenses} onChangeSplit={changeSplit} />
           </TabsContent>
           <TabsContent value="bandas">
-            <BandsTab box={box} bands={bands} setBands={setBands} isAdmin={isAdmin} />
+            <BandsTab box={box} bands={bands} setBands={setBands} isAdmin={isAdmin} userId={user?.id} />
           </TabsContent>
         </Tabs>
       </div>

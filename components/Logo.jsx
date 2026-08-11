@@ -1,13 +1,114 @@
 import React from "react";
 import { pal } from "@/lib/theme";
 
+export function NBoxesLogo({ width = 220, height = 240, className, style }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 220 240"
+      width={width}
+      height={height}
+      className={className}
+      style={style}
+    >
+      <defs>
+        <style>{`
+          @font-face {
+            font-family: 'Bebas Neue';
+            font-style: normal;
+            font-weight: 400;
+            src: url(https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXooxW4.ttf) format('truetype');
+          }
+        `}</style>
+      </defs>
+      <g transform="translate(110,84) scale(1.12)">
+        <polygon points="0,-58 50,-29 0,0 -50,-29" fill={pal.amber} stroke={pal.amber} strokeWidth="1" />
+        <polygon points="-50,-29 0,0 0,58 -50,29" fill={pal.red} stroke={pal.red} strokeWidth="1" />
+        <polygon points="50,-29 0,0 0,58 50,29" fill={pal.teal} stroke={pal.teal} strokeWidth="1" />
+        <polygon points="0,-58 50,-29 0,0 -50,-29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+        <polygon points="-50,-29 0,0 0,58 -50,29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+        <polygon points="50,-29 0,0 0,58 50,29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+      </g>
+      <text
+        x="110"
+        y="226"
+        textAnchor="middle"
+        fill={pal.cream}
+        fontFamily="'Bebas Neue', Impact, sans-serif"
+        fontSize="68"
+        letterSpacing="-1"
+        style={{ textTransform: "uppercase" }}
+      >
+        nboxes
+      </text>
+    </svg>
+  );
+}
+
+export function NBoxesLogoAnimated({ width = 220, height = 240, className, style }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 220 240"
+      width={width}
+      height={height}
+      className={className}
+      style={style}
+    >
+      <defs>
+        <style>{`
+          @font-face {
+            font-family: 'Bebas Neue';
+            font-style: normal;
+            font-weight: 400;
+            src: url(https://fonts.gstatic.com/s/bebasneue/v16/JTUSjIg69CK48gW7PXooxW4.ttf) format('truetype');
+          }
+          @keyframes nboxesSpin {
+            0% { transform: rotate(0deg); }
+            40% { transform: rotate(720deg); }
+            100% { transform: rotate(720deg); }
+          }
+          .nboxes-cube {
+            transform-origin: 0px 0px;
+            animation: nboxesSpin 6s ease-in-out infinite;
+          }
+        `}</style>
+      </defs>
+      <g transform="translate(110,84) scale(1.12)">
+        <g className="nboxes-cube">
+          <polygon points="0,-58 50,-29 0,0 -50,-29" fill={pal.amber} stroke={pal.amber} strokeWidth="1" />
+          <polygon points="-50,-29 0,0 0,58 -50,29" fill={pal.red} stroke={pal.red} strokeWidth="1" />
+          <polygon points="50,-29 0,0 0,58 50,29" fill={pal.teal} stroke={pal.teal} strokeWidth="1" />
+          <polygon points="0,-58 50,-29 0,0 -50,-29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+          <polygon points="-50,-29 0,0 0,58 -50,29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+          <polygon points="50,-29 0,0 0,58 50,29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+        </g>
+      </g>
+      <text
+        x="110"
+        y="226"
+        textAnchor="middle"
+        fill={pal.cream}
+        fontFamily="'Bebas Neue', Impact, sans-serif"
+        fontSize="68"
+        letterSpacing="-1"
+        style={{ textTransform: "uppercase" }}
+      >
+        nboxes
+      </text>
+    </svg>
+  );
+}
+
 export function NBoxIcon({ size = 24 }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden="true">
-      <rect x="4" y="11" width="32" height="23" rx="3" stroke={pal.amber} strokeWidth="2.5" />
-      <rect x="11" y="6" width="6" height="6" rx="1" fill={pal.amber} />
-      <rect x="23" y="6" width="6" height="6" rx="1" fill={pal.amber} />
-      <path d="M22 14 L13.5 24.5 L18.5 24.5 L16.5 32 L27 19.5 L21 19.5 Z" fill={pal.red} />
+    <svg width={size} height={size} viewBox="-58 -58 116 116" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <polygon points="0,-58 50,-29 0,0 -50,-29" fill={pal.amber} stroke={pal.amber} strokeWidth="1" />
+      <polygon points="-50,-29 0,0 0,58 -50,29" fill={pal.red} stroke={pal.red} strokeWidth="1" />
+      <polygon points="50,-29 0,0 0,58 50,29" fill={pal.teal} stroke={pal.teal} strokeWidth="1" />
+      <polygon points="0,-58 50,-29 0,0 -50,-29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+      <polygon points="-50,-29 0,0 0,58 -50,29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
+      <polygon points="50,-29 0,0 0,58 50,29" fill="none" stroke={pal.bg} strokeWidth="2.5" />
     </svg>
   );
 }
@@ -17,8 +118,8 @@ export function Logo({ size = "text-2xl", iconSize = 24 }) {
     <div className="flex items-center gap-2">
       <NBoxIcon size={iconSize} />
       <span
-        className={`font-display font-bold ${size} marquee-flicker`}
-        style={{ color: pal.amber, textShadow: `0 0 18px ${pal.amberSoft}` }}
+        className={`font-display font-bold ${size}`}
+        style={{ color: pal.amber, textShadow: `0 0 18px ${pal.amberSoft}`, textTransform: "uppercase" }}
       >
         n<span style={{ color: pal.cream }}>Boxes</span>
       </span>
@@ -27,25 +128,9 @@ export function Logo({ size = "text-2xl", iconSize = 24 }) {
 }
 
 export function LogoBadge({ size = 168 }) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 200 200" aria-label="nBoxes">
-      <circle cx="100" cy="100" r="94" fill={pal.panel} stroke={pal.amber} strokeWidth="4" />
-      <circle cx="100" cy="100" r="82" fill="none" stroke={pal.cream} strokeWidth="1.5" strokeDasharray="3 5" opacity="0.45" />
-      <path id="nboxesTopArc" d="M30,112 A72,72 0 0 1 170,112" fill="none" />
-      <text fontFamily="Oswald, sans-serif" fontWeight="700" fontSize="24" fill={pal.amber} letterSpacing="3">
-        <textPath href="#nboxesTopArc" startOffset="50%" textAnchor="middle">
-          nBOXES
-        </textPath>
-      </text>
-      <g transform="translate(100,122) scale(1.5)">
-        <rect x="-18" y="-12" width="36" height="26" rx="3" fill="none" stroke={pal.cream} strokeWidth="2.2" />
-        <rect x="-10" y="-17" width="6" height="6" rx="1" fill={pal.cream} />
-        <rect x="4" y="-17" width="6" height="6" rx="1" fill={pal.cream} />
-        <path d="M4 -8 L-4 4 L1 4 L-1 12 L9 -1 L3 -1 Z" fill={pal.red} />
-      </g>
-      <text x="100" y="168" textAnchor="middle" fontFamily="'JetBrains Mono', monospace" fontSize="9" fill={pal.creamDim} letterSpacing="3">
-        SALA DE ENSAIO
-      </text>
-    </svg>
-  );
+  return <NBoxesLogo width={size} height={Math.round(size * (240 / 220))} />;
+}
+
+export function LogoBadgeAnimated({ size = 168 }) {
+  return <NBoxesLogoAnimated width={size} height={Math.round(size * (240 / 220))} />;
 }

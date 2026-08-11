@@ -24,12 +24,22 @@ export function useAuth() {
     return () => subscription.unsubscribe();
   }, []);
 
-  const loginWithGoogle = () => {
+  const loginWithGoogle = (next = "/home") => {
     const supabase = createClient();
     supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=/home` },
+      options: { redirectTo: `${window.location.origin}/auth/callback?next=${next}` },
     });
+  };
+
+  const signUpWithEmail = async (email, password) => {
+    const supabase = createClient();
+    return supabase.auth.signUp({ email, password });
+  };
+
+  const signInWithEmail = async (email, password) => {
+    const supabase = createClient();
+    return supabase.auth.signInWithPassword({ email, password });
   };
 
   const logout = async () => {
@@ -37,5 +47,5 @@ export function useAuth() {
     await supabase.auth.signOut();
   };
 
-  return { user, loading, loginWithGoogle, logout };
+  return { user, loading, loginWithGoogle, signUpWithEmail, signInWithEmail, logout };
 }

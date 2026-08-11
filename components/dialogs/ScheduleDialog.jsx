@@ -13,7 +13,10 @@ import { createClient } from "@/lib/supabase/client";
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = ["00", "15", "30", "45"];
 
-export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDay, cursor, onCreated }) {
+export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, defaultStartHour, onCreated }) {
+  const startHour = defaultStartHour || "19";
+  const endHour = String(Math.min(23, Number(startHour) + 2)).padStart(2, "0");
+
   const [form, setForm] = useState({
     name: "",
     type: "Ensaio",
@@ -21,28 +24,33 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDay, cur
     scope: "banda",
     memberId: "",
     guestName: "",
-    startHour: "19",
+    startHour,
     startMinute: "00",
-    endHour: "21",
+    endHour,
     endMinute: "00",
-    day: defaultDay || 1,
-    month: cursor.month,
-    year: cursor.year,
+    day: defaultDate?.day || 1,
+    month: defaultDate?.month ?? 0,
+    year: defaultDate?.year ?? new Date().getFullYear(),
   });
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setForm((f) => ({
       ...f,
-      day: defaultDay || f.day,
-      month: cursor.month,
-      year: cursor.year,
+      day: defaultDate?.day || f.day,
+      month: defaultDate?.month ?? f.month,
+      year: defaultDate?.year ?? f.year,
+      startHour,
+      startMinute: "00",
+      endHour,
+      endMinute: "00",
       bandId: bands[0]?.id || "",
       scope: "banda",
       memberId: "",
       guestName: "",
     }));
-  }, [defaultDay, open, bands, cursor]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultDate, defaultStartHour, open, bands]);
 
   const selectedBand = bands.find((b) => b.id === form.bandId);
   const members = selectedBand?.members || [];

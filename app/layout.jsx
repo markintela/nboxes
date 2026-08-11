@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "nBoxes — Agenda e gestão de boxes musicais",
+  title: "NBOXES — Agenda e gestão de boxes musicais",
   description: "Agendamento de ensaios, gravações e ajustes, e divisão de despesas entre bandas e membros.",
 };
 
