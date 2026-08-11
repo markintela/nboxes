@@ -12,7 +12,7 @@ import { CompleteProfileDialog } from "@/components/dialogs/CompleteProfileDialo
 import { useAuth } from "@/hooks/useAuth";
 import { createClient } from "@/lib/supabase/client";
 
-function BoxCard({ box, onOpen }) {
+function BoxCard({ box, isOwner, onOpen }) {
   return (
     <button
       onClick={onOpen}
@@ -24,9 +24,16 @@ function BoxCard({ box, onOpen }) {
           <span className="font-mono text-[11px] tracking-widest" style={{ color: pal.brass }}>
             COMPLEXO {box.complex_number || "—"}
           </span>
-          <Badge style={{ background: pal.amberSoft, color: pal.amber }} className="border-0">
-            BOX {box.box_number || "—"}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {!isOwner && (
+              <Badge style={{ background: pal.tealSoft, color: pal.teal }} className="border-0">
+                MEMBRO
+              </Badge>
+            )}
+            <Badge style={{ background: pal.amberSoft, color: pal.amber }} className="border-0">
+              BOX {box.box_number || "—"}
+            </Badge>
+          </div>
         </div>
         <div className="flex items-center gap-2 mt-2">
           <NBoxIcon size={26} />
@@ -82,7 +89,6 @@ export default function HomePage() {
     const { data: boxRows, error } = await supabase
       .from("boxes")
       .select("*")
-      .eq("owner_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -142,7 +148,7 @@ export default function HomePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-8">
             {boxes.map((box) => (
-              <BoxCard key={box.id} box={box} onOpen={() => router.push(`/box/${box.id}`)} />
+              <BoxCard key={box.id} box={box} isOwner={box.owner_id === user.id} onOpen={() => router.push(`/box/${box.id}`)} />
             ))}
             <button
               onClick={() => setDialogOpen(true)}

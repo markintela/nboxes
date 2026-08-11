@@ -82,8 +82,13 @@ export default function InvitePage() {
     setSubmitting(true);
     setFormError("");
     setAutoAccept(true);
+    sessionStorage.setItem("nboxes_invite_pending", token);
     const supabase = createClient();
-    const { data, error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: `${window.location.origin}/convite/${token}` },
+    });
     setSubmitting(false);
     if (error) { setFormError(error.message); return; }
     if (data.session) acceptAndRedirect(supabase);
