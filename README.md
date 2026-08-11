@@ -87,3 +87,30 @@ de "Admin" na aba Bandas & Membros marca a permissão dentro da própria banda,
 mas pra dar acesso de administração da box a mais de uma conta Google, o
 próximo passo é criar uma tabela `box_admins (box_id, user_id)` e trocar as
 políticas de `owner_id = auth.uid()` para também aceitar linhas dessa tabela.
+
+## API externa de ensaios
+
+`app/api/external/rehearsals/**` expõe os ensaios (`schedules`) para
+consumo servidor-a-servidor por outras apps (ex.: o calendário do
+chico-romelo-fullstack). Usa a `service_role` key internamente — nunca chega
+ao browser — e é protegida por um segredo partilhado.
+
+- **Auth**: header `x-api-key: $REHEARSALS_API_KEY` em todos os pedidos.
+- **Escopo**: todo pedido leva um `email` (ex.: `romelochico@gmail.com`) que é
+  resolvido para uma box via `auth.users(email) → members.user_id →
+  members.band_id → bands.box_id` — ou seja, o email precisa ser de um membro
+  convidado (ou dono) de uma banda numa box. Se o email pertencer a mais de
+  uma box, passa também `box_id` para desambiguar.
+- **Disponibilidade**: não existe conceito de horário de funcionamento — um
+  horário está livre sempre que nenhum `schedules` já o ocupa.
+
+| Rota | Método | Descrição |
+| --- | --- | --- |
+| `/api/external/rehearsals?email=...&from=&to=` | `GET` | Lista os ensaios da box |
+| `/api/external/rehearsals` | `POST` | Cria um ensaio (409 se sobrepor outro) |
+| `/api/external/rehearsals/:id` | `PATCH` | Edita campos de um ensaio |
+| `/api/external/rehearsals/:id?email=...` | `DELETE` | Apaga um ensaio |
+| `/api/external/rehearsals/availability?email=...&date=YYYY-MM-DD` | `GET` | Horários ocupados no dia (ou `available: boolean` se `time`/`end_time` forem passados) |
+
+Configura `SUPABASE_SERVICE_ROLE_KEY` e `REHEARSALS_API_KEY` em `.env.local`
+(ver `.env.example`).
