@@ -167,7 +167,7 @@ export default function LandingPage() {
         </DialogContent>
       </Dialog>
       <div className="border-t py-4 text-center font-mono text-[11px]" style={{ borderColor: pal.line, color: pal.brass }}>
-        nBoxes © {new Date().getFullYear()} — feito para quem vive de ensaio marcado em cima da hora.
+        NBOXES © {new Date().getFullYear()} — onde o som encontra comunidade, ensaio após ensaio.
       </div>
     </div>
   );
