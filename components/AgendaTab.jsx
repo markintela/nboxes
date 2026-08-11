@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   pal, TYPE_META, SCOPE_META,
   monthMatrix, daysInMonth, addDays, addMonths, weekDates, layoutDayEvents,
 } from "@/lib/theme";
 import { AmberButton } from "@/components/Chrome";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { ScheduleDialog } from "@/components/dialogs/ScheduleDialog";
 import { useLanguage } from "@/lib/i18n/LanguageContext";
 
@@ -17,6 +18,23 @@ const DAY_END_HOUR = 23;
 const HOUR_HEIGHT = 52;
 const HOURS_RANGE = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i);
 const TIMELINE_HEIGHT = HOURS_RANGE.length * HOUR_HEIGHT;
+
+// Abaixo deste ponto o grid de 7 colunas do mês fica pequeno de mais para
+// texto legível (telemóveis e tablets em retrato) — usamos pontos + um
+// diálogo com a lista do dia em vez de tentar espremer o texto todo.
+const COMPACT_QUERY = "(max-width: 899px)";
+
+function useIsCompact() {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia(COMPACT_QUERY);
+    const update = () => setCompact(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+  return compact;
+}
 
 function sameDay(a, b) {
   return a.day === b.getDate() && a.month === b.getMonth() && a.year === b.getFullYear();
@@ -82,15 +100,15 @@ function EventBlock({ ev, bands, style }) {
       title={`${ev.name} · ${scopeLabel}: ${who} · ${timeRange}`}
     >
       <div className="flex items-center gap-1">
-        <Icon size={10} style={{ color: meta.color, flexShrink: 0 }} />
+        <Icon size={11} style={{ color: meta.color, flexShrink: 0 }} />
         <span className="font-mono text-[10px] font-semibold truncate" style={{ color: meta.color }}>{timeRange}</span>
       </div>
-      <div className="font-body text-[11px] truncate" style={{ color: pal.cream }}>{ev.name}</div>
+      <div className="font-body text-xs truncate" style={{ color: pal.cream }}>{ev.name}</div>
       <span
-        className="inline-flex items-center gap-1 rounded-sm px-1 py-[1px] mt-0.5 font-mono text-[9px] truncate font-semibold"
+        className="inline-flex items-center gap-1 rounded-sm px-1 py-[1px] mt-0.5 font-mono text-[10px] truncate font-semibold"
         style={{ background: scopeMeta.soft, color: scopeMeta.color }}
       >
-        <ScopeIcon size={9} /> {who}
+        <ScopeIcon size={10} /> {who}
       </span>
     </div>
   );
@@ -99,13 +117,14 @@ function EventBlock({ ev, bands, style }) {
 /* ------------------------------ DAY / WEEK ------------------------------ */
 function DayWeekView({ days, schedule, bands, onSlotClick }) {
   const eventsByDay = days.map((d) => schedule.filter((s) => s.day === d.day && s.month === d.month && s.year === d.year));
-  const minWidth = 56 + days.length * (days.length === 1 ? 280 : 120);
+  const dayWidth = days.length === 1 ? 300 : 170;
+  const minWidth = 56 + days.length * dayWidth;
 
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto snap-x snap-mandatory">
       <div className="overflow-y-auto" style={{ maxHeight: "65vh", minWidth }}>
         <div className="flex border rounded-md overflow-hidden" style={{ borderColor: pal.line }}>
-          <div className="flex flex-col shrink-0" style={{ width: 56 }}>
+          <div className="flex flex-col shrink-0 sticky left-0 z-20" style={{ width: 56, background: pal.panel }}>
             <div className="h-12 border-b sticky top-0 z-10" style={{ borderColor: pal.line, background: pal.panel }} />
             {HOURS_RANGE.map((h) => (
               <div
@@ -117,11 +136,11 @@ function DayWeekView({ days, schedule, bands, onSlotClick }) {
               </div>
             ))}
           </div>
-          <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${days.length}, 1fr)` }}>
+          <div className="flex-1 grid" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(${dayWidth}px, 1fr))` }}>
             {days.map((d, di) => {
               const placed = layoutDayEvents(eventsByDay[di]);
               return (
-                <div key={di} className="relative border-l" style={{ borderColor: pal.line }}>
+                <div key={di} className="relative border-l snap-start" style={{ borderColor: pal.line }}>
                   <div
                     className="h-12 border-b sticky top-0 z-10 flex flex-col items-center justify-center"
                     style={{ borderColor: pal.line, background: d.isToday ? pal.amberSoft : pal.panel2 }}
@@ -170,7 +189,7 @@ function DayWeekView({ days, schedule, bands, onSlotClick }) {
 }
 
 /* --------------------------------- MÊS ---------------------------------- */
-function MonthView({ refDate, schedule, bands, weekdaysShort, onDayClick }) {
+function MonthView({ refDate, schedule, bands, weekdaysShort, compact, onDayClick, onShowDay }) {
   const { t } = useLanguage();
   const cells = useMemo(() => monthMatrix(refDate.year, refDate.month), [refDate.year, refDate.month]);
   const eventsForMonth = schedule.filter((s) => s.month === refDate.month && s.year === refDate.year);
@@ -185,11 +204,17 @@ function MonthView({ refDate, schedule, bands, weekdaysShort, onDayClick }) {
       {cells.map((day, idx) => {
         const events = day ? eventsForMonth.filter((s) => s.day === day) : [];
         const isToday = day && sameDay({ year: refDate.year, month: refDate.month, day }, now);
+        const dateObj = day ? { year: refDate.year, month: refDate.month, day } : null;
+        const handleClick = () => {
+          if (!dateObj) return;
+          if (compact && events.length > 0) onShowDay(dateObj, events);
+          else onDayClick(dateObj);
+        };
         return (
           <div
             key={idx}
-            onClick={() => day && onDayClick({ year: refDate.year, month: refDate.month, day })}
-            className="border-r border-b p-1.5 flex flex-col gap-1 min-h-[92px] md:min-h-[120px]"
+            onClick={handleClick}
+            className={`border-r border-b p-1.5 flex flex-col gap-1 ${compact ? "min-h-[52px]" : "min-h-[92px] md:min-h-[120px]"}`}
             style={{ borderColor: pal.line, background: day ? (isToday ? pal.amberSoft : pal.bg) : pal.lineSoft, cursor: day ? "pointer" : "default" }}
           >
             {day && (
@@ -197,47 +222,110 @@ function MonthView({ refDate, schedule, bands, weekdaysShort, onDayClick }) {
                 <span className="font-mono text-xs" style={{ color: isToday ? pal.amber : pal.creamDim }}>
                   {String(day).padStart(2, "0")}
                 </span>
-                <div className="flex flex-col gap-1 overflow-hidden">
-                  {events.slice(0, 3).map((ev) => {
-                    const meta = TYPE_META[ev.type] || TYPE_META.Outros;
-                    const Icon = meta.icon;
-                    const scopeMeta = SCOPE_META[ev.scope] || SCOPE_META.banda;
-                    const ScopeIcon = scopeMeta.icon;
-                    const who = whoFor(ev, bands, t);
-                    const scopeLabel = t(`enums.scope.${ev.scope}`);
-                    const timeRange = ev.end_time ? `${ev.time}–${ev.end_time}` : ev.time;
-                    return (
-                      <div
-                        key={ev.id}
-                        className="rounded-sm px-1.5 py-0.5 overflow-hidden"
-                        style={{ background: meta.soft }}
-                        title={`${ev.name} · ${scopeLabel}: ${who} · ${timeRange}`}
-                      >
-                        <div className="flex items-center gap-1">
-                          <Icon size={10} style={{ color: meta.color, flexShrink: 0 }} />
-                          <span className="font-mono text-[10px] truncate flex-1" style={{ color: meta.color }}>{timeRange} {ev.name}</span>
+                {compact ? (
+                  events.length > 0 && (
+                    <div className="flex flex-wrap gap-1 items-center">
+                      {events.slice(0, 4).map((ev) => (
+                        <span key={ev.id} className="w-2 h-2 rounded-full" style={{ background: (TYPE_META[ev.type] || TYPE_META.Outros).color }} />
+                      ))}
+                      {events.length > 4 && (
+                        <span className="font-mono text-[9px]" style={{ color: pal.creamDim }}>+{events.length - 4}</span>
+                      )}
+                    </div>
+                  )
+                ) : (
+                  <div className="flex flex-col gap-1 overflow-hidden">
+                    {events.slice(0, 3).map((ev) => {
+                      const meta = TYPE_META[ev.type] || TYPE_META.Outros;
+                      const Icon = meta.icon;
+                      const scopeMeta = SCOPE_META[ev.scope] || SCOPE_META.banda;
+                      const ScopeIcon = scopeMeta.icon;
+                      const who = whoFor(ev, bands, t);
+                      const scopeLabel = t(`enums.scope.${ev.scope}`);
+                      const timeRange = ev.end_time ? `${ev.time}–${ev.end_time}` : ev.time;
+                      return (
+                        <div
+                          key={ev.id}
+                          className="rounded-sm px-1.5 py-0.5 overflow-hidden"
+                          style={{ background: meta.soft }}
+                          title={`${ev.name} · ${scopeLabel}: ${who} · ${timeRange}`}
+                        >
+                          <div className="flex items-center gap-1">
+                            <Icon size={10} style={{ color: meta.color, flexShrink: 0 }} />
+                            <span className="font-mono text-[10px] truncate flex-1" style={{ color: meta.color }}>{timeRange} {ev.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <span
+                              className="flex items-center gap-1 rounded-sm px-1 py-[1px] font-mono text-[9px] truncate font-semibold"
+                              style={{ background: scopeMeta.soft, color: scopeMeta.color }}
+                            >
+                              <ScopeIcon size={9} style={{ flexShrink: 0 }} /> {who}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <span
-                            className="flex items-center gap-1 rounded-sm px-1 py-[1px] font-mono text-[9px] truncate font-semibold"
-                            style={{ background: scopeMeta.soft, color: scopeMeta.color }}
-                          >
-                            <ScopeIcon size={9} style={{ flexShrink: 0 }} /> {who}
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                  {events.length > 3 && (
-                    <span className="font-mono text-[9px]" style={{ color: pal.creamDim }}>{t("agenda.moreEvents", { count: events.length - 3 })}</span>
-                  )}
-                </div>
+                      );
+                    })}
+                    {events.length > 3 && (
+                      <span className="font-mono text-[9px]" style={{ color: pal.creamDim }}>{t("agenda.moreEvents", { count: events.length - 3 })}</span>
+                    )}
+                  </div>
+                )}
               </>
             )}
           </div>
         );
       })}
     </div>
+  );
+}
+
+/* --------------------------- DETALHE DO DIA ------------------------------ */
+function DayAgendaDialog({ open, onOpenChange, date, events, bands, months, onAdd }) {
+  const { t } = useLanguage();
+  const dateLabel = date
+    ? t("calendar.longDate", { day: String(date.day).padStart(2, "0"), month: months[date.month], year: date.year })
+    : "";
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
+        <DialogHeader>
+          <DialogTitle className="font-display" style={{ color: pal.amber }}>{dateLabel}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 mt-2 max-h-[55vh] overflow-y-auto">
+          {events.length === 0 ? (
+            <p className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.dayAgendaEmpty")}</p>
+          ) : (
+            events.map((ev) => {
+              const meta = TYPE_META[ev.type] || TYPE_META.Outros;
+              const Icon = meta.icon;
+              const scopeMeta = SCOPE_META[ev.scope] || SCOPE_META.banda;
+              const ScopeIcon = scopeMeta.icon;
+              const who = whoFor(ev, bands, t);
+              const timeRange = ev.end_time ? `${ev.time}–${ev.end_time}` : ev.time;
+              return (
+                <div key={ev.id} className="rounded-sm p-3 border-l-2" style={{ background: meta.soft, borderColor: meta.color }}>
+                  <div className="flex items-center gap-2">
+                    <Icon size={14} style={{ color: meta.color, flexShrink: 0 }} />
+                    <span className="font-mono text-xs font-semibold" style={{ color: meta.color }}>{timeRange}</span>
+                  </div>
+                  <div className="font-body text-sm mt-1" style={{ color: pal.cream }}>{ev.name}</div>
+                  <span
+                    className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 mt-1.5 font-mono text-[11px] font-semibold"
+                    style={{ background: scopeMeta.soft, color: scopeMeta.color }}
+                  >
+                    <ScopeIcon size={11} /> {who}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+        <DialogFooter className="mt-4">
+          <AmberButton icon={Plus} onClick={onAdd} className="w-full justify-center">{t("agenda.schedule")}</AmberButton>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -301,17 +389,32 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
   const months = t("calendar.months");
   const weekdaysShort = t("calendar.weekdaysShort");
   const weekdaysLong = t("calendar.weekdaysLong");
+  const compact = useIsCompact();
 
   const [view, setView] = useState("mes");
   const [refDate, setRefDate] = useState({ year: now.getFullYear(), month: now.getMonth(), day: now.getDate() });
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogDate, setDialogDate] = useState(refDate);
   const [dialogHour, setDialogHour] = useState(undefined);
+  const [dayAgendaOpen, setDayAgendaOpen] = useState(false);
+  const [dayAgendaDate, setDayAgendaDate] = useState(null);
+  const [dayAgendaEvents, setDayAgendaEvents] = useState([]);
 
   const openDialog = (date, hour) => {
     setDialogDate(date);
     setDialogHour(hour !== undefined ? String(hour).padStart(2, "0") : undefined);
     setDialogOpen(true);
+  };
+
+  const showDayAgenda = (date, events) => {
+    setDayAgendaDate(date);
+    setDayAgendaEvents(events);
+    setDayAgendaOpen(true);
+  };
+
+  const addFromDayAgenda = () => {
+    setDayAgendaOpen(false);
+    openDialog(dayAgendaDate);
   };
 
   const navigate = (delta) => {
@@ -376,7 +479,15 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
       </div>
 
       {view === "mes" && (
-        <MonthView refDate={refDate} schedule={schedule} bands={bands} weekdaysShort={weekdaysShort} onDayClick={(d) => openDialog(d)} />
+        <MonthView
+          refDate={refDate}
+          schedule={schedule}
+          bands={bands}
+          weekdaysShort={weekdaysShort}
+          compact={compact}
+          onDayClick={(d) => openDialog(d)}
+          onShowDay={showDayAgenda}
+        />
       )}
       {view === "trimestre" && (
         <QuarterView refDate={refDate} schedule={schedule} months={months} weekdaysShort={weekdaysShort} onDayClick={(d) => { setRefDate(d); setView("dia"); }} />
@@ -431,6 +542,15 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
         defaultDate={dialogDate}
         defaultStartHour={dialogHour}
         onCreated={(item) => setSchedule((prev) => [...prev, item])}
+      />
+      <DayAgendaDialog
+        open={dayAgendaOpen}
+        onOpenChange={setDayAgendaOpen}
+        date={dayAgendaDate}
+        events={dayAgendaEvents}
+        bands={bands}
+        months={months}
+        onAdd={addFromDayAgenda}
       />
     </div>
   );
