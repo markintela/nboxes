@@ -16,6 +16,7 @@ export default function LandingPage() {
   const router = useRouter();
 
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [createChoiceOpen, setCreateChoiceOpen] = useState(false);
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -81,15 +82,38 @@ export default function LandingPage() {
             <AmberButton icon={Chrome} onClick={() => loginWithGoogle()} className="justify-center">
               Continuar com Google
             </AmberButton>
-            <GhostButton onClick={() => loginWithGoogle()} className="justify-center">
-              Criar conta com Google
+            <GhostButton onClick={() => { setMode("signin"); setEmailDialogOpen(true); }} className="justify-center">
+              Continuar com Email
             </GhostButton>
-            <GhostButton onClick={() => setEmailDialogOpen(true)} className="justify-center">
-              Email
+            <GhostButton onClick={() => setCreateChoiceOpen(true)} className="justify-center">
+              Criar conta
             </GhostButton>
           </div>
         </div>
       </div>
+
+      <Dialog open={createChoiceOpen} onOpenChange={setCreateChoiceOpen}>
+        <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
+          <DialogHeader>
+            <DialogTitle className="font-display" style={{ color: pal.amber }}>Criar conta</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 mt-2">
+            <AmberButton
+              icon={Chrome}
+              onClick={() => { setCreateChoiceOpen(false); loginWithGoogle(); }}
+              className="w-full justify-center"
+            >
+              Criar com Google
+            </AmberButton>
+            <GhostButton
+              onClick={() => { setCreateChoiceOpen(false); setMode("signup"); setEmailDialogOpen(true); }}
+              className="w-full justify-center"
+            >
+              Criar com email
+            </GhostButton>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
         <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
