@@ -2,9 +2,14 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
-import { pal, MONTH_NAMES, WEEK_DAYS, monthMatrix } from "@/lib/theme";
+import { pal, monthMatrix } from "@/lib/theme";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function DatePicker({ day, month, year, onChange }) {
+  const { t } = useLanguage();
+  const months = t("calendar.months");
+  const weekdaysShort = t("calendar.weekdaysShort");
+
   const [open, setOpen] = useState(false);
   const [cursor, setCursor] = useState({ month, year });
   const ref = useRef(null);
@@ -34,7 +39,7 @@ export function DatePicker({ day, month, year, onChange }) {
     setOpen(false);
   };
 
-  const label = `${String(day).padStart(2, "0")} de ${MONTH_NAMES[month]?.toLowerCase()} de ${year}`;
+  const label = t("calendar.longDate", { day: String(day).padStart(2, "0"), month: months[month], year });
 
   return (
     <div className="relative" ref={ref}>
@@ -58,14 +63,14 @@ export function DatePicker({ day, month, year, onChange }) {
               <ChevronLeft size={14} />
             </button>
             <span className="font-display font-semibold text-sm" style={{ color: pal.cream }}>
-              {MONTH_NAMES[cursor.month]} <span style={{ color: pal.amber }}>{cursor.year}</span>
+              {months[cursor.month]} <span style={{ color: pal.amber }}>{cursor.year}</span>
             </span>
             <button type="button" onClick={() => changeMonth(1)} className="p-1 rounded-sm border hover:brightness-125" style={{ borderColor: pal.line, color: pal.cream }}>
               <ChevronRight size={14} />
             </button>
           </div>
           <div className="grid grid-cols-7 gap-0.5">
-            {WEEK_DAYS.map((d, i) => (
+            {weekdaysShort.map((d, i) => (
               <div key={i} className="font-mono text-[10px] text-center py-1" style={{ color: pal.brass }}>
                 {d}
               </div>

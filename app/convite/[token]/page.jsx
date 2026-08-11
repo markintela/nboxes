@@ -8,13 +8,16 @@ import { Logo } from "@/components/Logo";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AmberButton, GhostButton } from "@/components/Chrome";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
 export default function InvitePage() {
   const { token } = useParams();
   const router = useRouter();
   const { user, loading: authLoading, loginWithGoogle, logout } = useAuth();
+  const { t } = useLanguage();
 
   const [invite, setInvite] = useState(null);
   const [inviteLoading, setInviteLoading] = useState(true);
@@ -47,11 +50,11 @@ export default function InvitePage() {
     const { data, error } = await supabase.rpc("get_invite", { p_token: token }).maybeSingle();
     setInviteLoading(false);
     if (error || !data) {
-      setInviteError("Este convite não existe ou é inválido.");
+      setInviteError(t("inviteAccept.invalidTitle"));
       return;
     }
     if (data.used_at) {
-      setInviteError("Este convite já foi utilizado.");
+      setInviteError(t("inviteAccept.usedTitle"));
       return;
     }
     setInvite(data);
@@ -70,7 +73,7 @@ export default function InvitePage() {
     setAccepting(true);
     const { data, error } = await supabase.rpc("accept_invite", { p_token: token }).maybeSingle();
     if (error) {
-      setInviteError(error.message || "Não foi possível aceitar o convite.");
+      setInviteError(error.message || t("inviteAccept.genericError"));
       setAccepting(false);
       return;
     }
@@ -114,6 +117,9 @@ export default function InvitePage() {
 
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center px-6 py-16" style={{ background: pal.bg }}>
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageSwitcher />
+      </div>
       <div
         className="absolute inset-0 opacity-30 pointer-events-none"
         style={{ backgroundImage: `radial-gradient(circle at 50% 0%, ${pal.amberSoft} 0%, transparent 55%)` }}
@@ -122,33 +128,32 @@ export default function InvitePage() {
         <Logo size="text-xl" />
 
         {inviteLoading ? (
-          <p className="font-mono text-sm mt-8" style={{ color: pal.creamDim }}>A carregar convite…</p>
+          <p className="font-mono text-sm mt-8" style={{ color: pal.creamDim }}>{t("inviteAccept.loadingInvite")}</p>
         ) : inviteError ? (
           <div className="mt-8 w-full rounded-md border p-5" style={{ borderColor: pal.line, background: pal.panel }}>
             <p className="font-display font-semibold" style={{ color: pal.red }}>{inviteError}</p>
             <p className="font-body text-xs mt-2" style={{ color: pal.creamDim }}>
-              Pede a quem te convidou para enviar um novo link.
+              {t("inviteAccept.askNewLink")}
             </p>
             <GhostButton onClick={() => router.push("/")} className="mt-4 w-full justify-center">
-              Ir para o nBoxes
+              {t("inviteAccept.goHome")}
             </GhostButton>
           </div>
         ) : authLoading || accepting ? (
-          <p className="font-mono text-sm mt-8" style={{ color: pal.creamDim }}>A juntar-te à box…</p>
+          <p className="font-mono text-sm mt-8" style={{ color: pal.creamDim }}>{t("inviteAccept.joining")}</p>
         ) : user && !autoAccept ? (
           <div className="mt-8 w-full rounded-md border p-5 text-left" style={{ borderColor: pal.line, background: pal.panel }}>
             <p className="font-body text-sm text-center" style={{ color: pal.cream }}>
-              Foste convidado para <strong>{invite.member_name}</strong> te juntares à banda{" "}
-              <strong>{invite.band_name}</strong> na box <strong>{invite.box_name}</strong>.
+              {t("inviteAccept.invitedTo", { member: invite.member_name, band: invite.band_name, box: invite.box_name })}
             </p>
             <p className="font-mono text-[11px] mt-4 text-center" style={{ color: pal.creamDim }}>
-              Estás autenticado como <strong style={{ color: pal.cream }}>{user.email}</strong>.
+              {t("inviteAccept.authenticatedAs", { email: user.email })}
             </p>
             <AmberButton
               onClick={() => { setAutoAccept(true); acceptAndRedirect(createClient()); }}
               className="justify-center w-full mt-4"
             >
-              Aceitar convite
+              {t("inviteAccept.acceptInvite")}
             </AmberButton>
             <button
               type="button"
@@ -156,14 +161,13 @@ export default function InvitePage() {
               className="font-mono text-[11px] mt-3 w-full text-center hover:brightness-125"
               style={{ color: pal.brass }}
             >
-              Não é a tua conta? Sair e usar outra
+              {t("inviteAccept.wrongAccount")}
             </button>
           </div>
         ) : (
           <div className="mt-8 w-full rounded-md border p-5 text-left" style={{ borderColor: pal.line, background: pal.panel }}>
             <p className="font-body text-sm text-center" style={{ color: pal.cream }}>
-              Foste convidado para <strong>{invite.member_name}</strong> te juntares à banda{" "}
-              <strong>{invite.band_name}</strong> na box <strong>{invite.box_name}</strong>.
+              {t("inviteAccept.invitedTo", { member: invite.member_name, band: invite.band_name, box: invite.box_name })}
             </p>
 
             <AmberButton
@@ -174,29 +178,28 @@ export default function InvitePage() {
               }}
               className="justify-center w-full mt-5"
             >
-              Continuar com Google
+              {t("landing.continueGoogle")}
             </AmberButton>
 
             <div className="flex items-center gap-3 my-4">
               <span className="flex-1 border-t" style={{ borderColor: pal.line }} />
-              <span className="font-mono text-[11px]" style={{ color: pal.brass }}>OU</span>
+              <span className="font-mono text-[11px]" style={{ color: pal.brass }}>{t("inviteAccept.or")}</span>
               <span className="flex-1 border-t" style={{ borderColor: pal.line }} />
             </div>
 
             {needsConfirmation ? (
               <p className="font-body text-xs" style={{ color: pal.creamDim }}>
-                Enviámos um email de confirmação para <strong>{email}</strong>. Confirma a tua conta e depois
-                clica em "Entrar" abaixo com a mesma password.
+                {t("inviteAccept.confirmEmailSent", { email })}
               </p>
             ) : (
               <div className="space-y-3">
                 <div>
-                  <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Email</Label>
-                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="o-teu-email@exemplo.com" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+                  <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("landing.emailLabel")}</Label>
+                  <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("landing.emailPlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
                 </div>
                 <div>
-                  <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Palavra-passe</Label>
-                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+                  <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("landing.passwordLabel")}</Label>
+                  <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("landing.passwordPlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
                 </div>
                 {formError && (
                   <p className="font-mono text-[11px]" style={{ color: pal.red }}>{formError}</p>
@@ -205,7 +208,7 @@ export default function InvitePage() {
                   onClick={mode === "signup" ? submitSignUp : submitSignIn}
                   className="w-full justify-center"
                 >
-                  {submitting ? "A processar…" : mode === "signup" ? "Criar conta" : "Entrar"}
+                  {submitting ? t("landing.processing") : mode === "signup" ? t("landing.signUp") : t("landing.signIn")}
                 </GhostButton>
               </div>
             )}
@@ -217,7 +220,7 @@ export default function InvitePage() {
                 className="font-mono text-[11px] mt-4 w-full text-center hover:brightness-125"
                 style={{ color: pal.brass }}
               >
-                {mode === "signup" ? "Já tens conta? Entrar" : "Ainda não tens conta? Criar conta"}
+                {mode === "signup" ? t("landing.alreadyHaveAccount") : t("landing.noAccount")}
               </button>
             )}
           </div>

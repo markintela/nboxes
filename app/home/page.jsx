@@ -10,9 +10,11 @@ import { LogoBadge, NBoxIcon } from "@/components/Logo";
 import { CreateBoxDialog } from "@/components/dialogs/CreateBoxDialog";
 import { CompleteProfileDialog } from "@/components/dialogs/CompleteProfileDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
 function BoxCard({ box, isOwner, onOpen }) {
+  const { t } = useLanguage();
   return (
     <button
       onClick={onOpen}
@@ -22,16 +24,16 @@ function BoxCard({ box, isOwner, onOpen }) {
       <div className="p-5">
         <div className="flex items-center justify-between">
           <span className="font-mono text-[11px] tracking-widest" style={{ color: pal.brass }}>
-            COMPLEXO {box.complex_number || "—"}
+            {t("home.complexLabel", { number: box.complex_number || "—" })}
           </span>
           <div className="flex items-center gap-1.5">
             {!isOwner && (
               <Badge style={{ background: pal.tealSoft, color: pal.teal }} className="border-0">
-                MEMBRO
+                {t("home.memberBadge")}
               </Badge>
             )}
             <Badge style={{ background: pal.amberSoft, color: pal.amber }} className="border-0">
-              BOX {box.box_number || "—"}
+              {t("home.boxLabel", { number: box.box_number || "—" })}
             </Badge>
           </div>
         </div>
@@ -42,17 +44,17 @@ function BoxCard({ box, isOwner, onOpen }) {
         <p className="font-body text-xs mt-1" style={{ color: pal.creamDim }}>{box.complex_name}</p>
         <div className="flex items-center gap-4 mt-4">
           <span className="flex items-center gap-1.5 font-mono text-xs" style={{ color: pal.creamDim }}>
-            <Guitar size={13} style={{ color: pal.amber }} /> {box.bandCount || 0} banda(s)
+            <Guitar size={13} style={{ color: pal.amber }} /> {t("home.bandsCount", { count: box.bandCount || 0 })}
           </span>
           <span className="flex items-center gap-1.5 font-mono text-xs" style={{ color: pal.creamDim }}>
-            <Users size={13} style={{ color: pal.teal }} /> {box.memberCount || 0} membros
+            <Users size={13} style={{ color: pal.teal }} /> {t("home.membersCount", { count: box.memberCount || 0 })}
           </span>
         </div>
       </div>
       <div className="stub-dots h-3 w-full" />
       <div className="px-5 py-3 flex items-center justify-between" style={{ background: pal.panel2 }}>
-        <span className="font-mono text-[11px]" style={{ color: pal.brass }}>ACESSO LIBERADO</span>
-        <span className="font-display text-sm font-semibold" style={{ color: pal.amber }}>Abrir box →</span>
+        <span className="font-mono text-[11px]" style={{ color: pal.brass }}>{t("home.accessGranted")}</span>
+        <span className="font-display text-sm font-semibold" style={{ color: pal.amber }}>{t("home.openBox")}</span>
       </div>
     </button>
   );
@@ -60,6 +62,7 @@ function BoxCard({ box, isOwner, onOpen }) {
 
 export default function HomePage() {
   const { user, loading: authLoading, logout } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [boxes, setBoxes] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -126,7 +129,7 @@ export default function HomePage() {
   if (authLoading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: pal.bg }}>
-        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>A carregar…</p>
+        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>{t("common.loading")}</p>
       </div>
     );
   }
@@ -137,24 +140,24 @@ export default function HomePage() {
       <div className="px-5 md:px-8 py-8 max-w-6xl mx-auto">
         <div className="flex items-end justify-between flex-wrap gap-4">
           <div>
-            <p className="font-mono text-xs tracking-widest" style={{ color: pal.brass }}>MINHAS BOXES</p>
+            <p className="font-mono text-xs tracking-widest" style={{ color: pal.brass }}>{t("home.myBoxes")}</p>
             <h1 className="font-display font-bold text-3xl mt-1" style={{ color: pal.cream }}>
-              E aí, {firstName}. Bora ensaiar?
+              {t("home.greeting", { name: firstName })}
             </h1>
           </div>
-          <AmberButton icon={Plus} onClick={() => setDialogOpen(true)}>Nova box</AmberButton>
+          <AmberButton icon={Plus} onClick={() => setDialogOpen(true)}>{t("home.newBox")}</AmberButton>
         </div>
 
         {loading ? (
-          <p className="font-mono text-sm mt-10" style={{ color: pal.creamDim }}>Carregando boxes...</p>
+          <p className="font-mono text-sm mt-10" style={{ color: pal.creamDim }}>{t("home.loadingBoxes")}</p>
         ) : boxes.length === 0 ? (
           <div className="flex flex-col items-center text-center py-16">
             <LogoBadge size={120} />
             <p className="font-body text-sm mt-4 max-w-sm" style={{ color: pal.creamDim }}>
-              Ainda não tens nenhuma box cadastrada. Cria a primeira para começar a agendar ensaios e dividir despesas.
+              {t("home.emptyText")}
             </p>
             <AmberButton icon={Plus} onClick={() => setDialogOpen(true)} className="mt-6">
-              Cadastrar nova box
+              {t("home.createFirstBox")}
             </AmberButton>
           </div>
         ) : (
@@ -168,7 +171,7 @@ export default function HomePage() {
               style={{ borderColor: pal.line, color: pal.creamDim }}
             >
               <Plus size={22} style={{ color: pal.amber }} />
-              <span className="font-display text-sm">Cadastrar nova box</span>
+              <span className="font-display text-sm">{t("home.createFirstBox")}</span>
             </button>
           </div>
         )}

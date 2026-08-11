@@ -9,10 +9,13 @@ import { AmberButton, GhostButton } from "@/components/Chrome";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export default function LandingPage() {
   const { user, loading, loginWithGoogle, signUpWithEmail, signInWithEmail } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
 
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
@@ -31,7 +34,7 @@ export default function LandingPage() {
   if (loading || user) {
     return (
       <div className="min-h-screen w-full flex items-center justify-center" style={{ background: pal.bg }}>
-        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>A carregar…</p>
+        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>{t("common.loading")}</p>
       </div>
     );
   }
@@ -49,8 +52,18 @@ export default function LandingPage() {
     if (mode === "signup" && !data.session) setNeedsConfirmation(true);
   };
 
+  const cards = [
+    { icon: Plus, title: t("landing.cardCreateTitle"), desc: t("landing.cardCreateDesc") },
+    { icon: CalendarDays, title: t("landing.cardScheduleTitle"), desc: t("landing.cardScheduleDesc") },
+    { icon: Wallet, title: t("landing.cardExpensesTitle"), desc: t("landing.cardExpensesDesc") },
+    { icon: MessageCircle, title: t("landing.cardShareTitle"), desc: t("landing.cardShareDesc") },
+  ];
+
   return (
     <div className="min-h-screen w-full flex flex-col" style={{ background: pal.bg }}>
+      <div className="absolute top-5 right-5 z-20">
+        <LanguageSwitcher />
+      </div>
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 relative overflow-hidden">
         <div
           className="absolute inset-0 opacity-30"
@@ -59,25 +72,18 @@ export default function LandingPage() {
         <div className="relative z-10 flex flex-col items-center text-center max-w-xl">
           <LogoBadgeAnimated size={168} />
           <p className="font-mono text-xs mt-4 tracking-[0.3em]" style={{ color: pal.creamDim }}>
-            MOVIMENTO · ARTE · MÚSICA
+            {t("landing.tagline")}
           </p>
 
           <h1 className="font-display font-bold text-3xl md:text-4xl mt-10 leading-tight" style={{ color: pal.cream }}>
-            Onde o movimento vira som, e a tua agenda entra no ritmo.
+            {t("landing.heroTitle")}
           </h1>
           <p className="font-body text-base mt-4" style={{ color: pal.creamDim }}>
-            Regista as tuas boxes e marca ensaios, gravações e ajustes num calendário só teu, para que a única
-            coisa que precises de afinar seja o som. Divide a água, a luz e a internet entre as bandas ou entre
-            os membros.
+            {t("landing.heroSubtitle")}
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-10 w-full">
-            {[
-              { icon: Plus, title: "CRIE", desc: "Regista as tuas boxes, cria bandas e adiciona membros em poucos cliques." },
-              { icon: CalendarDays, title: "AGENDE", desc: "Marca ensaios, gravações e ajustes, e vê tudo por dia, semana, mês ou trimestre." },
-              { icon: Wallet, title: "GERENCIE DESPESAS", desc: "Divide a água, a luz e a internet por banda ou por membro, sem complicações." },
-              { icon: MessageCircle, title: "COMPARTILHE", desc: "Convida a tua banda por WhatsApp — o membro entra direto na tua box." },
-            ].map((f, i) => (
+            {cards.map((f, i) => (
               <div key={i} className="p-4 rounded-sm border flex flex-col items-center text-center" style={{ borderColor: pal.line, background: pal.panel }}>
                 <f.icon size={32} style={{ color: pal.amber }} />
                 <p className="font-display text-sm font-semibold mt-3" style={{ color: pal.cream }}>{f.title}</p>
@@ -88,13 +94,13 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-3 mt-10 w-full sm:w-auto">
             <AmberButton icon={Chrome} onClick={() => loginWithGoogle()} className="justify-center">
-              Continuar com Google
+              {t("landing.continueGoogle")}
             </AmberButton>
             <GhostButton onClick={() => { setMode("signin"); setEmailDialogOpen(true); }} className="justify-center">
-              Continuar com Email
+              {t("landing.continueEmail")}
             </GhostButton>
             <GhostButton onClick={() => setCreateChoiceOpen(true)} className="justify-center">
-              Criar conta
+              {t("landing.createAccount")}
             </GhostButton>
           </div>
         </div>
@@ -103,7 +109,7 @@ export default function LandingPage() {
       <Dialog open={createChoiceOpen} onOpenChange={setCreateChoiceOpen}>
         <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
           <DialogHeader>
-            <DialogTitle className="font-display" style={{ color: pal.amber }}>Criar conta</DialogTitle>
+            <DialogTitle className="font-display" style={{ color: pal.amber }}>{t("landing.createAccountTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 mt-2">
             <AmberButton
@@ -111,13 +117,13 @@ export default function LandingPage() {
               onClick={() => { setCreateChoiceOpen(false); loginWithGoogle(); }}
               className="w-full justify-center"
             >
-              Criar com Google
+              {t("landing.createWithGoogle")}
             </AmberButton>
             <GhostButton
               onClick={() => { setCreateChoiceOpen(false); setMode("signup"); setEmailDialogOpen(true); }}
               className="w-full justify-center"
             >
-              Criar com email
+              {t("landing.createWithEmail")}
             </GhostButton>
           </div>
         </DialogContent>
@@ -127,29 +133,28 @@ export default function LandingPage() {
         <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
           <DialogHeader>
             <DialogTitle className="font-display" style={{ color: pal.amber }}>
-              {mode === "signup" ? "Criar conta" : "Entrar"}
+              {mode === "signup" ? t("landing.signUp") : t("landing.signIn")}
             </DialogTitle>
           </DialogHeader>
           {needsConfirmation ? (
             <p className="font-body text-xs mt-2" style={{ color: pal.creamDim }}>
-              Enviámos um email de confirmação para <strong>{email}</strong>. Confirma a tua conta e depois
-              entra com a mesma palavra-passe.
+              {t("landing.confirmEmailSent", { email })}
             </p>
           ) : (
             <div className="space-y-3 mt-2">
               <div>
-                <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Email</Label>
-                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="o-teu-email@exemplo.com" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+                <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("landing.emailLabel")}</Label>
+                <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t("landing.emailPlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
               </div>
               <div>
-                <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Palavra-passe</Label>
-                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+                <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("landing.passwordLabel")}</Label>
+                <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder={t("landing.passwordPlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
               </div>
               {formError && (
                 <p className="font-mono text-[11px]" style={{ color: pal.red }}>{formError}</p>
               )}
               <AmberButton onClick={submitEmail} className="w-full justify-center">
-                {submitting ? "A processar…" : mode === "signup" ? "Criar conta" : "Entrar"}
+                {submitting ? t("landing.processing") : mode === "signup" ? t("landing.signUp") : t("landing.signIn")}
               </AmberButton>
             </div>
           )}
@@ -161,13 +166,13 @@ export default function LandingPage() {
               className="font-mono text-[11px] mt-4 w-full text-center hover:brightness-125"
               style={{ color: pal.brass }}
             >
-              {mode === "signup" ? "Já tens conta? Entrar" : "Ainda não tens conta? Criar conta"}
+              {mode === "signup" ? t("landing.alreadyHaveAccount") : t("landing.noAccount")}
             </button>
           )}
         </DialogContent>
       </Dialog>
       <div className="border-t py-4 text-center font-mono text-[11px]" style={{ borderColor: pal.line, color: pal.brass }}>
-        NBOXES © {new Date().getFullYear()} — onde a música vira comunidade.
+        NBOXES © {new Date().getFullYear()} — {t("landing.footer")}
       </div>
     </div>
   );

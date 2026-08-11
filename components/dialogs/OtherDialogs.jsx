@@ -6,13 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { AmberButton } from "@/components/Chrome";
-import { pal, EXP_META, MONTH_NAMES } from "@/lib/theme";
+import { pal, EXP_META } from "@/lib/theme";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
 const now = new Date();
 
 export function AddExpenseDialog({ open, onOpenChange, box, onCreated }) {
-  const [form, setForm] = useState({ tipo: "Água", valor: "", mes: MONTH_NAMES[now.getMonth()] });
+  const { t } = useLanguage();
+  const months = t("calendar.months");
+  const [form, setForm] = useState({ tipo: "Água", valor: "", mes: months[now.getMonth()] });
   const [saving, setSaving] = useState(false);
 
   const submit = async () => {
@@ -28,10 +31,10 @@ export function AddExpenseDialog({ open, onOpenChange, box, onCreated }) {
     if (!error) {
       onCreated(data);
       onOpenChange(false);
-      setForm({ tipo: "Água", valor: "", mes: MONTH_NAMES[now.getMonth()] });
+      setForm({ tipo: "Água", valor: "", mes: months[now.getMonth()] });
     } else {
       // eslint-disable-next-line no-alert
-      alert(`Erro ao adicionar despesa: ${error.message}`);
+      alert(`${t("financeiro.error")}: ${error.message}`);
     }
   };
 
@@ -39,35 +42,35 @@ export function AddExpenseDialog({ open, onOpenChange, box, onCreated }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
         <DialogHeader>
-          <DialogTitle className="font-display" style={{ color: pal.amber }}>Nova despesa</DialogTitle>
+          <DialogTitle className="font-display" style={{ color: pal.amber }}>{t("financeiro.addExpenseDialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 mt-2">
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Tipo</Label>
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("financeiro.typeLabel")}</Label>
             <Select value={form.tipo} onValueChange={(v) => setForm({ ...form, tipo: v })}>
               <SelectTrigger style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
-                {Object.keys(EXP_META).map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                {Object.keys(EXP_META).map((k) => (
+                  <SelectItem key={k} value={k}>{t(`enums.expenseType.${k}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Valor (R$)</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("financeiro.amountLabel")}</Label>
               <Input type="number" value={form.valor} onChange={(e) => setForm({ ...form, valor: e.target.value })} placeholder="150" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
             </div>
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Mês de referência</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("financeiro.refMonthLabel")}</Label>
               <Input value={form.mes} onChange={(e) => setForm({ ...form, mes: e.target.value })} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
             </div>
           </div>
         </div>
         <DialogFooter className="mt-4">
-          <AmberButton onClick={submit}>{saving ? "Salvando..." : "Adicionar despesa"}</AmberButton>
+          <AmberButton onClick={submit}>{saving ? t("financeiro.saving") : t("financeiro.addExpense")}</AmberButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -75,6 +78,7 @@ export function AddExpenseDialog({ open, onOpenChange, box, onCreated }) {
 }
 
 export function AddBandDialog({ open, onOpenChange, box, onCreated }) {
+  const { t } = useLanguage();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -94,7 +98,7 @@ export function AddBandDialog({ open, onOpenChange, box, onCreated }) {
       onOpenChange(false);
     } else {
       // eslint-disable-next-line no-alert
-      alert(`Erro ao adicionar banda: ${error.message}`);
+      alert(`${t("bandas.errorBand")}: ${error.message}`);
     }
   };
 
@@ -102,14 +106,14 @@ export function AddBandDialog({ open, onOpenChange, box, onCreated }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
         <DialogHeader>
-          <DialogTitle className="font-display" style={{ color: pal.amber }}>Adicionar banda</DialogTitle>
+          <DialogTitle className="font-display" style={{ color: pal.amber }}>{t("bandas.addBandDialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="mt-2">
-          <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nome da banda</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Osso do Ofício" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+          <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("bandas.bandNameLabel")}</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("bandas.bandNamePlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
         </div>
         <DialogFooter className="mt-4">
-          <AmberButton onClick={submit}>{saving ? "Salvando..." : "Adicionar"}</AmberButton>
+          <AmberButton onClick={submit}>{saving ? t("bandas.saving") : t("bandas.add")}</AmberButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
@@ -117,6 +121,7 @@ export function AddBandDialog({ open, onOpenChange, box, onCreated }) {
 }
 
 export function AddMemberDialog({ open, onOpenChange, band, onCreated }) {
+  const { t } = useLanguage();
   const [name, setName] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -136,7 +141,7 @@ export function AddMemberDialog({ open, onOpenChange, band, onCreated }) {
       onOpenChange(false);
     } else {
       // eslint-disable-next-line no-alert
-      alert(`Erro ao adicionar membro: ${error.message}`);
+      alert(`${t("bandas.errorMember")}: ${error.message}`);
     }
   };
 
@@ -145,15 +150,15 @@ export function AddMemberDialog({ open, onOpenChange, band, onCreated }) {
       <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
         <DialogHeader>
           <DialogTitle className="font-display" style={{ color: pal.amber }}>
-            Adicionar membro {band ? `— ${band.name}` : ""}
+            {t("bandas.addMemberDialogTitle")} {band ? `— ${band.name}` : ""}
           </DialogTitle>
         </DialogHeader>
         <div className="mt-2">
-          <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nome do membro</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Marcos Vinil" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+          <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("bandas.memberNameLabel")}</Label>
+          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder={t("bandas.memberNamePlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
         </div>
         <DialogFooter className="mt-4">
-          <AmberButton onClick={submit}>{saving ? "Salvando..." : "Adicionar"}</AmberButton>
+          <AmberButton onClick={submit}>{saving ? t("bandas.saving") : t("bandas.add")}</AmberButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

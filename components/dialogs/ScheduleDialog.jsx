@@ -8,12 +8,14 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { AmberButton } from "@/components/Chrome";
 import { DatePicker } from "@/components/DatePicker";
 import { pal, TYPE_META, SCOPE_META } from "@/lib/theme";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, "0"));
 const MINUTES = ["00", "15", "30", "45"];
 
 export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, defaultStartHour, onCreated }) {
+  const { t } = useLanguage();
   const startHour = defaultStartHour || "19";
   const endHour = String(Math.min(23, Number(startHour) + 2)).padStart(2, "0");
 
@@ -85,7 +87,7 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
       onOpenChange(false);
     } else {
       // eslint-disable-next-line no-alert
-      alert(`Erro ao agendar: ${error.message}`);
+      alert(`${t("agenda.error")}: ${error.message}`);
     }
   };
 
@@ -93,30 +95,30 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
         <DialogHeader>
-          <DialogTitle className="font-display" style={{ color: pal.amber }}>Novo agendamento</DialogTitle>
+          <DialogTitle className="font-display" style={{ color: pal.amber }}>{t("agenda.scheduleDialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 mt-2">
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nome</Label>
-            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Ex: Ensaio pré-show" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.nameLabel")}</Label>
+            <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("agenda.namePlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
           </div>
 
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Tipo</Label>
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.typeLabel")}</Label>
             <Select value={form.type} onValueChange={(v) => setForm({ ...form, type: v })}>
               <SelectTrigger style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
-                {Object.keys(TYPE_META).map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
+                {Object.keys(TYPE_META).map((k) => (
+                  <SelectItem key={k} value={k}>{t(`enums.type.${k}`)}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
 
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Agendamento para</Label>
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.scopeLabel")}</Label>
             <div className="grid grid-cols-3 gap-2 mt-1">
               {Object.entries(SCOPE_META).map(([key, meta]) => {
                 const Icon = meta.icon;
@@ -133,7 +135,7 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
                       color: active ? "#241C0F" : pal.creamDim,
                     }}
                   >
-                    <Icon size={13} /> {meta.label}
+                    <Icon size={13} /> {t(`enums.scope.${key}`)}
                   </button>
                 );
               })}
@@ -142,10 +144,10 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
 
           {form.scope !== "convidado" && (
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Banda</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.bandLabel")}</Label>
               <Select value={form.bandId} onValueChange={(v) => setForm({ ...form, bandId: v, memberId: "" })}>
                 <SelectTrigger style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder={t("agenda.selectPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
                   {bands.map((b) => (
@@ -158,10 +160,10 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
 
           {form.scope === "individual" && (
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Membro</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.memberLabel")}</Label>
               <Select value={form.memberId} onValueChange={(v) => setForm({ ...form, memberId: v })}>
                 <SelectTrigger style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
-                  <SelectValue placeholder="Selecione o membro" />
+                  <SelectValue placeholder={t("agenda.selectMemberPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
                   {members.map((m) => (
@@ -174,13 +176,13 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
 
           {form.scope === "convidado" && (
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nome do convidado</Label>
-              <Input value={form.guestName} onChange={(e) => setForm({ ...form, guestName: e.target.value })} placeholder="Ex: João (produtor)" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.guestNameLabel")}</Label>
+              <Input value={form.guestName} onChange={(e) => setForm({ ...form, guestName: e.target.value })} placeholder={t("agenda.guestNamePlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
             </div>
           )}
 
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Data</Label>
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.dateLabel")}</Label>
             <DatePicker
               day={form.day}
               month={form.month}
@@ -191,7 +193,7 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Hora inicial</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.startTimeLabel")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 <Select value={form.startHour} onValueChange={(v) => setForm({ ...form, startHour: v })}>
                   <SelectTrigger style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
@@ -216,7 +218,7 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
               </div>
             </div>
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Hora final</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("agenda.endTimeLabel")}</Label>
               <div className="grid grid-cols-2 gap-2">
                 <Select value={form.endHour} onValueChange={(v) => setForm({ ...form, endHour: v })}>
                   <SelectTrigger style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }}>
@@ -243,7 +245,7 @@ export function ScheduleDialog({ open, onOpenChange, box, bands, defaultDate, de
           </div>
         </div>
         <DialogFooter className="mt-4">
-          <AmberButton onClick={submit}>{saving ? "Marcando..." : "Marcar agendamento"}</AmberButton>
+          <AmberButton onClick={submit}>{saving ? t("agenda.scheduling") : t("agenda.confirmSchedule")}</AmberButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

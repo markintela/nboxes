@@ -3,6 +3,8 @@ import { LogOut, ArrowLeft } from "lucide-react";
 import { pal } from "@/lib/theme";
 import { Logo } from "@/components/Logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 export function AmberButton({ children, onClick, className = "", type = "button", icon: Icon }) {
   return (
@@ -42,8 +44,9 @@ export function TicketDivider() {
 }
 
 export function AppHeader({ user, onLogout, onBack, crumb }) {
+  const { t } = useLanguage();
   const displayName =
-    user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || "Você";
+    user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || t("common.user");
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
@@ -75,6 +78,7 @@ export function AppHeader({ user, onLogout, onBack, crumb }) {
         )}
       </div>
       <div className="flex items-center gap-3">
+        <LanguageSwitcher className="hidden sm:inline-flex" />
         <Avatar className="h-8 w-8">
           <AvatarFallback style={{ background: pal.panel2, color: pal.amber }} className="font-display text-xs">
             {initials}
@@ -85,7 +89,7 @@ export function AppHeader({ user, onLogout, onBack, crumb }) {
           onClick={onLogout}
           className="p-1.5 rounded-sm border hover:brightness-125"
           style={{ borderColor: pal.line, color: pal.creamDim }}
-          title="Sair"
+          title={t("header.signOut")}
         >
           <LogOut size={16} />
         </button>

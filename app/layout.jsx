@@ -1,4 +1,5 @@
 import "./globals.css";
+import { LanguageProvider } from "@/lib/i18n/LanguageContext";
 
 export const metadata = {
   title: "NBOXES — Agenda e gestão de boxes musicais",
@@ -15,7 +16,9 @@ export default function RootLayout({ children }) {
           rel="stylesheet"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <LanguageProvider>{children}</LanguageProvider>
+      </body>
     </html>
   );
 }

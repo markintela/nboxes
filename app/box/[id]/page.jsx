@@ -15,10 +15,12 @@ import { AgendaTab } from "@/components/AgendaTab";
 import { AddExpenseDialog, AddBandDialog, AddMemberDialog } from "@/components/dialogs/OtherDialogs";
 import { InviteMemberDialog } from "@/components/dialogs/InviteMemberDialog";
 import { useAuth } from "@/hooks/useAuth";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
 /* --------------------------- FINANCEIRO TAB --------------------------- */
 function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
+  const { t } = useLanguage();
   const [dialogOpen, setDialogOpen] = useState(false);
   const split = computeSplit(box, expenses, bands);
 
@@ -26,8 +28,8 @@ function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
     <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 py-6">
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="font-display font-bold text-lg" style={{ color: pal.cream }}>Despesas do mês</h3>
-          <AmberButton icon={Plus} onClick={() => setDialogOpen(true)}>Adicionar</AmberButton>
+          <h3 className="font-display font-bold text-lg" style={{ color: pal.cream }}>{t("financeiro.monthExpenses")}</h3>
+          <AmberButton icon={Plus} onClick={() => setDialogOpen(true)}>{t("financeiro.add")}</AmberButton>
         </div>
         <div className="rounded-md border divide-y" style={{ borderColor: pal.line }}>
           {expenses.map((exp) => {
@@ -36,7 +38,7 @@ function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
             return (
               <div key={exp.id} className="flex items-center justify-between px-4 py-3" style={{ background: pal.panel }}>
                 <span className="flex items-center gap-2 font-body text-sm" style={{ color: pal.cream }}>
-                  <Icon size={15} style={{ color: meta.color }} /> {exp.tipo}
+                  <Icon size={15} style={{ color: meta.color }} /> {t(`enums.expenseType.${exp.tipo}`)}
                   <span className="font-mono text-[11px]" style={{ color: pal.brass }}>· {exp.mes}</span>
                 </span>
                 <span className="font-mono text-sm" style={{ color: pal.amber }}>{fmtBRL(exp.valor)}</span>
@@ -44,16 +46,16 @@ function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
             );
           })}
           <div className="flex items-center justify-between px-4 py-3" style={{ background: pal.panel2 }}>
-            <span className="font-display text-sm font-semibold" style={{ color: pal.cream }}>Total</span>
+            <span className="font-display text-sm font-semibold" style={{ color: pal.cream }}>{t("financeiro.total")}</span>
             <span className="font-mono text-sm font-semibold" style={{ color: pal.amber }}>{fmtBRL(split.totalExpense)}</span>
           </div>
         </div>
 
         <div className="rounded-md border p-4 flex items-center justify-between" style={{ borderColor: pal.line, background: pal.panel }}>
           <div>
-            <p className="font-display text-sm font-semibold" style={{ color: pal.cream }}>Dividir por número de bandas</p>
+            <p className="font-display text-sm font-semibold" style={{ color: pal.cream }}>{t("financeiro.splitByBandsTitle")}</p>
             <p className="font-mono text-[11px] mt-0.5" style={{ color: pal.creamDim }}>
-              {box.split_method === "banda" ? "Ativo — rateio igual entre bandas" : "Desligado — rateio igual entre membros"}
+              {box.split_method === "banda" ? t("financeiro.splitActive") : t("financeiro.splitInactive")}
             </p>
           </div>
           <Switch checked={box.split_method === "banda"} onCheckedChange={(v) => onChangeSplit(v ? "banda" : "membro")} />
@@ -61,9 +63,9 @@ function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
       </div>
 
       <div className="lg:col-span-3 space-y-3">
-        <h3 className="font-display font-bold text-lg" style={{ color: pal.cream }}>Receitas da box — quanto cada um deve</h3>
+        <h3 className="font-display font-bold text-lg" style={{ color: pal.cream }}>{t("financeiro.revenueTitle")}</h3>
         <p className="font-mono text-[11px]" style={{ color: pal.brass }}>
-          RATEIO ATUAL: {box.split_method === "banda" ? "POR BANDA" : "POR MEMBRO"}
+          {t("financeiro.currentSplitLabel", { value: box.split_method === "banda" ? t("financeiro.perBand") : t("financeiro.perMember") })}
         </p>
         <div className="space-y-3">
           {split.bandTotals.map((bt) => (
@@ -96,6 +98,7 @@ function FinanceiroTab({ box, bands, expenses, setExpenses, onChangeSplit }) {
 
 /* ------------------------------ BANDAS TAB ----------------------------- */
 function BandsTab({ box, bands, setBands, isAdmin, userId }) {
+  const { t } = useLanguage();
   const [bandDialogOpen, setBandDialogOpen] = useState(false);
   const [memberDialogOpen, setMemberDialogOpen] = useState(false);
   const [activeBand, setActiveBand] = useState(null);
@@ -122,8 +125,8 @@ function BandsTab({ box, bands, setBands, isAdmin, userId }) {
   return (
     <div className="py-6 space-y-5">
       <div className="flex items-center justify-between">
-        <h3 className="font-display font-bold text-lg" style={{ color: pal.cream }}>Bandas & membros</h3>
-        <AmberButton icon={Plus} onClick={() => setBandDialogOpen(true)}>Adicionar banda</AmberButton>
+        <h3 className="font-display font-bold text-lg" style={{ color: pal.cream }}>{t("bandas.title")}</h3>
+        <AmberButton icon={Plus} onClick={() => setBandDialogOpen(true)}>{t("bandas.addBand")}</AmberButton>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -134,7 +137,7 @@ function BandsTab({ box, bands, setBands, isAdmin, userId }) {
                 <Guitar size={15} style={{ color: pal.amber }} /> {band.name}
               </span>
               <Badge style={{ background: pal.tealSoft, color: pal.teal }} className="border-0">
-                {band.members.length} membro(s)
+                {t("bandas.membersCountBadge", { count: band.members.length })}
               </Badge>
             </div>
             <div className="divide-y" style={{ background: pal.panel }}>
@@ -150,7 +153,7 @@ function BandsTab({ box, bands, setBands, isAdmin, userId }) {
                         className="flex items-center gap-1 font-mono text-[11px] px-2 py-1 rounded-sm hover:brightness-125"
                         style={{ color: pal.teal, background: pal.tealSoft }}
                       >
-                        <UserPlus size={12} /> Convidar
+                        <UserPlus size={12} /> {t("bandas.invite")}
                       </button>
                     )}
                     <button
@@ -164,7 +167,7 @@ function BandsTab({ box, bands, setBands, isAdmin, userId }) {
                         cursor: isAdmin ? "pointer" : "not-allowed",
                       }}
                     >
-                      <Crown size={12} /> {m.is_admin ? "Admin" : "Membro"}
+                      <Crown size={12} /> {m.is_admin ? t("bandas.admin") : t("bandas.member")}
                     </button>
                   </div>
                 </div>
@@ -175,7 +178,7 @@ function BandsTab({ box, bands, setBands, isAdmin, userId }) {
               className="w-full flex items-center justify-center gap-2 py-2.5 font-mono text-xs hover:brightness-125"
               style={{ background: pal.bg, color: pal.brass, borderTop: `1px dashed ${pal.line}` }}
             >
-              <Plus size={12} /> Adicionar membro
+              <Plus size={12} /> {t("bandas.addMember")}
             </button>
           </div>
         ))}
@@ -207,6 +210,7 @@ export default function BoxDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user, loading: authLoading, logout } = useAuth();
+  const { t } = useLanguage();
 
   const [box, setBox] = useState(null);
   const [bands, setBands] = useState([]);
@@ -255,7 +259,7 @@ export default function BoxDetailPage() {
   if (authLoading || !user || loading || !box) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: pal.bg }}>
-        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>Carregando box...</p>
+        <p className="font-mono text-sm" style={{ color: pal.creamDim }}>{t("box.loadingBox")}</p>
       </div>
     );
   }
@@ -271,15 +275,15 @@ export default function BoxDetailPage() {
           </div>
           <div>
             <p className="font-mono text-[11px] tracking-widest" style={{ color: pal.brass }}>
-              {(box.complex_name || "").toUpperCase()} · COMPLEXO {box.complex_number || "—"}
+              {(box.complex_name || "").toUpperCase()} · {t("box.complexPrefix", { number: box.complex_number || "—" })}
             </p>
             <h1 className="font-display font-bold text-3xl" style={{ color: pal.cream }}>
-              Box {box.box_number || "—"} — {box.box_name}
+              {t("box.boxTitle", { number: box.box_number || "—", name: box.box_name })}
             </h1>
           </div>
           {isAdmin && (
             <Badge style={{ background: pal.redSoft, color: pal.red }} className="border-0 ml-auto">
-              <Crown size={11} className="mr-1 inline" /> VOCÊ É ADMIN
+              <Crown size={11} className="mr-1 inline" /> {t("box.youAreAdmin")}
             </Badge>
           )}
         </div>
@@ -288,9 +292,9 @@ export default function BoxDetailPage() {
 
         <Tabs defaultValue="agenda" className="mt-2">
           <TabsList style={{ background: pal.panel, borderColor: pal.line }}>
-            <TabsTrigger value="agenda" icon={CalendarDays}>Agenda</TabsTrigger>
-            <TabsTrigger value="financeiro" icon={Wallet}>Financeiro</TabsTrigger>
-            <TabsTrigger value="bandas" icon={Users}>Bandas & membros</TabsTrigger>
+            <TabsTrigger value="agenda" icon={CalendarDays}>{t("box.tabAgenda")}</TabsTrigger>
+            <TabsTrigger value="financeiro" icon={Wallet}>{t("box.tabFinanceiro")}</TabsTrigger>
+            <TabsTrigger value="bandas" icon={Users}>{t("box.tabBandas")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="agenda">

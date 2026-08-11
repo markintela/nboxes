@@ -3,11 +3,12 @@
 import React, { useMemo, useState } from "react";
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import {
-  pal, TYPE_META, SCOPE_META, MONTH_NAMES, WEEK_DAYS, WEEKDAY_NAMES,
+  pal, TYPE_META, SCOPE_META,
   monthMatrix, daysInMonth, addDays, addMonths, weekDates, layoutDayEvents,
 } from "@/lib/theme";
 import { AmberButton } from "@/components/Chrome";
 import { ScheduleDialog } from "@/components/dialogs/ScheduleDialog";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 
 const now = new Date();
 
@@ -17,20 +18,13 @@ const HOUR_HEIGHT = 52;
 const HOURS_RANGE = Array.from({ length: DAY_END_HOUR - DAY_START_HOUR + 1 }, (_, i) => DAY_START_HOUR + i);
 const TIMELINE_HEIGHT = HOURS_RANGE.length * HOUR_HEIGHT;
 
-const VIEWS = [
-  { key: "dia", label: "Dia" },
-  { key: "semana", label: "Semana" },
-  { key: "mes", label: "Mês" },
-  { key: "trimestre", label: "Trimestre" },
-];
-
 function sameDay(a, b) {
   return a.day === b.getDate() && a.month === b.getMonth() && a.year === b.getFullYear();
 }
 
-function whoFor(ev, bands) {
+function whoFor(ev, bands, t) {
   if (ev.scope === "individual") return bands.flatMap((b) => b.members).find((m) => m.id === ev.member_id)?.name || "—";
-  if (ev.scope === "convidado") return ev.guest_name || "Convidado";
+  if (ev.scope === "convidado") return ev.guest_name || t("agenda.guestFallback");
   return bands.find((b) => b.id === ev.band_id)?.name || "—";
 }
 
@@ -44,9 +38,16 @@ function pixelsForRange(startMin, endMin) {
 }
 
 function ViewSwitcher({ view, onChange }) {
+  const { t } = useLanguage();
+  const views = [
+    { key: "dia", label: t("agenda.viewDay") },
+    { key: "semana", label: t("agenda.viewWeek") },
+    { key: "mes", label: t("agenda.viewMonth") },
+    { key: "trimestre", label: t("agenda.viewQuarter") },
+  ];
   return (
     <div className="inline-flex items-center gap-1 rounded-md border p-1" style={{ borderColor: pal.line, background: pal.panel }}>
-      {VIEWS.map((v) => (
+      {views.map((v) => (
         <button
           key={v.key}
           type="button"
@@ -65,18 +66,20 @@ function ViewSwitcher({ view, onChange }) {
 }
 
 function EventBlock({ ev, bands, style }) {
+  const { t } = useLanguage();
   const meta = TYPE_META[ev.type] || TYPE_META.Outros;
   const Icon = meta.icon;
   const scopeMeta = SCOPE_META[ev.scope] || SCOPE_META.banda;
   const ScopeIcon = scopeMeta.icon;
-  const who = whoFor(ev, bands);
+  const who = whoFor(ev, bands, t);
+  const scopeLabel = t(`enums.scope.${ev.scope}`);
   const timeRange = ev.end_time ? `${ev.time}–${ev.end_time}` : ev.time;
 
   return (
     <div
       className="absolute rounded-sm px-1.5 py-1 overflow-hidden border-l-2"
       style={{ background: meta.soft, borderColor: meta.color, ...style }}
-      title={`${ev.name} · ${scopeMeta.label}: ${who} · ${timeRange}`}
+      title={`${ev.name} · ${scopeLabel}: ${who} · ${timeRange}`}
     >
       <div className="flex items-center gap-1">
         <Icon size={10} style={{ color: meta.color, flexShrink: 0 }} />
@@ -167,13 +170,14 @@ function DayWeekView({ days, schedule, bands, onSlotClick }) {
 }
 
 /* --------------------------------- MÊS ---------------------------------- */
-function MonthView({ refDate, schedule, bands, onDayClick }) {
+function MonthView({ refDate, schedule, bands, weekdaysShort, onDayClick }) {
+  const { t } = useLanguage();
   const cells = useMemo(() => monthMatrix(refDate.year, refDate.month), [refDate.year, refDate.month]);
   const eventsForMonth = schedule.filter((s) => s.month === refDate.month && s.year === refDate.year);
 
   return (
     <div className="grid grid-cols-7 border-t border-l flex-1" style={{ borderColor: pal.line }}>
-      {WEEK_DAYS.map((d, i) => (
+      {weekdaysShort.map((d, i) => (
         <div key={i} className="font-mono text-[11px] text-center py-2 border-r border-b" style={{ borderColor: pal.line, color: pal.brass, background: pal.panel }}>
           {d}
         </div>
@@ -199,14 +203,15 @@ function MonthView({ refDate, schedule, bands, onDayClick }) {
                     const Icon = meta.icon;
                     const scopeMeta = SCOPE_META[ev.scope] || SCOPE_META.banda;
                     const ScopeIcon = scopeMeta.icon;
-                    const who = whoFor(ev, bands);
+                    const who = whoFor(ev, bands, t);
+                    const scopeLabel = t(`enums.scope.${ev.scope}`);
                     const timeRange = ev.end_time ? `${ev.time}–${ev.end_time}` : ev.time;
                     return (
                       <div
                         key={ev.id}
                         className="rounded-sm px-1.5 py-0.5 overflow-hidden"
                         style={{ background: meta.soft }}
-                        title={`${ev.name} · ${scopeMeta.label}: ${who} · ${timeRange}`}
+                        title={`${ev.name} · ${scopeLabel}: ${who} · ${timeRange}`}
                       >
                         <div className="flex items-center gap-1">
                           <Icon size={10} style={{ color: meta.color, flexShrink: 0 }} />
@@ -224,7 +229,7 @@ function MonthView({ refDate, schedule, bands, onDayClick }) {
                     );
                   })}
                   {events.length > 3 && (
-                    <span className="font-mono text-[9px]" style={{ color: pal.creamDim }}>+{events.length - 3} mais</span>
+                    <span className="font-mono text-[9px]" style={{ color: pal.creamDim }}>{t("agenda.moreEvents", { count: events.length - 3 })}</span>
                   )}
                 </div>
               </>
@@ -237,16 +242,16 @@ function MonthView({ refDate, schedule, bands, onDayClick }) {
 }
 
 /* ------------------------------ TRIMESTRE -------------------------------- */
-function MiniMonth({ year, month, schedule, onDayClick }) {
+function MiniMonth({ year, month, schedule, monthName, weekdaysShort, onDayClick }) {
   const cells = monthMatrix(year, month);
 
   return (
     <div className="rounded-md border overflow-hidden" style={{ borderColor: pal.line }}>
       <div className="px-3 py-2 font-display font-semibold text-sm text-center" style={{ background: pal.panel2, color: pal.amber }}>
-        {MONTH_NAMES[month]}
+        {monthName}
       </div>
       <div className="grid grid-cols-7">
-        {WEEK_DAYS.map((d, i) => (
+        {weekdaysShort.map((d, i) => (
           <div key={i} className="font-mono text-[9px] text-center py-1" style={{ color: pal.brass }}>{d}</div>
         ))}
         {cells.map((day, idx) => {
@@ -277,14 +282,14 @@ function MiniMonth({ year, month, schedule, onDayClick }) {
   );
 }
 
-function QuarterView({ refDate, schedule, onDayClick }) {
+function QuarterView({ refDate, schedule, months, weekdaysShort, onDayClick }) {
   const qStartMonth = Math.floor(refDate.month / 3) * 3;
-  const months = [0, 1, 2].map((i) => qStartMonth + i);
+  const qMonths = [0, 1, 2].map((i) => qStartMonth + i);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-5 py-4">
-      {months.map((m) => (
-        <MiniMonth key={m} year={refDate.year} month={m} schedule={schedule} onDayClick={onDayClick} />
+      {qMonths.map((m) => (
+        <MiniMonth key={m} year={refDate.year} month={m} schedule={schedule} monthName={months[m]} weekdaysShort={weekdaysShort} onDayClick={onDayClick} />
       ))}
     </div>
   );
@@ -292,6 +297,11 @@ function QuarterView({ refDate, schedule, onDayClick }) {
 
 /* ------------------------------ AGENDA TAB ------------------------------- */
 export function AgendaTab({ box, bands, schedule, setSchedule }) {
+  const { t } = useLanguage();
+  const months = t("calendar.months");
+  const weekdaysShort = t("calendar.weekdaysShort");
+  const weekdaysLong = t("calendar.weekdaysLong");
+
   const [view, setView] = useState("mes");
   const [refDate, setRefDate] = useState({ year: now.getFullYear(), month: now.getMonth(), day: now.getDate() });
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -320,22 +330,27 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
 
   const periodLabel = useMemo(() => {
     if (view === "dia") {
-      const weekday = WEEKDAY_NAMES[new Date(refDate.year, refDate.month, refDate.day).getDay()];
-      return `${weekday}, ${refDate.day} de ${MONTH_NAMES[refDate.month]} de ${refDate.year}`;
+      const weekday = weekdaysLong[new Date(refDate.year, refDate.month, refDate.day).getDay()];
+      return t("agenda.dayLabel", { weekday, day: refDate.day, month: months[refDate.month], year: refDate.year });
     }
     if (view === "semana") {
       const days = weekDates(refDate.year, refDate.month, refDate.day);
       const first = days[0];
       const last = days[6];
-      if (first.month === last.month) return `${first.day} – ${last.day} de ${MONTH_NAMES[first.month]} de ${first.year}`;
-      return `${first.day} de ${MONTH_NAMES[first.month]} – ${last.day} de ${MONTH_NAMES[last.month]} de ${last.year}`;
+      if (first.month === last.month) {
+        return t("agenda.weekLabelSameMonth", { startDay: first.day, endDay: last.day, month: months[first.month], year: first.year });
+      }
+      return t("agenda.weekLabelCrossMonth", {
+        startDay: first.day, startMonth: months[first.month],
+        endDay: last.day, endMonth: months[last.month], year: last.year,
+      });
     }
     if (view === "trimestre") {
       const qStartMonth = Math.floor(refDate.month / 3) * 3;
-      return `${MONTH_NAMES[qStartMonth]} – ${MONTH_NAMES[qStartMonth + 2]} de ${refDate.year}`;
+      return t("agenda.quarterLabel", { startMonth: months[qStartMonth], endMonth: months[qStartMonth + 2], year: refDate.year });
     }
-    return `${MONTH_NAMES[refDate.month]} ${refDate.year}`;
-  }, [view, refDate]);
+    return t("agenda.monthLabel", { month: months[refDate.month], year: refDate.year });
+  }, [view, refDate, months, weekdaysLong, t]);
 
   return (
     <div className="flex flex-col" style={{ minHeight: "70vh" }}>
@@ -351,26 +366,26 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
             <ChevronRight size={16} />
           </button>
           <button onClick={goToday} className="font-mono text-[11px] px-2 py-1 rounded-sm border hover:brightness-125" style={{ borderColor: pal.line, color: pal.brass }}>
-            Hoje
+            {t("agenda.today")}
           </button>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
           <ViewSwitcher view={view} onChange={setView} />
-          <AmberButton icon={Plus} onClick={() => openDialog(refDate)}>Agendar</AmberButton>
+          <AmberButton icon={Plus} onClick={() => openDialog(refDate)}>{t("agenda.schedule")}</AmberButton>
         </div>
       </div>
 
       {view === "mes" && (
-        <MonthView refDate={refDate} schedule={schedule} bands={bands} onDayClick={(d) => openDialog(d)} />
+        <MonthView refDate={refDate} schedule={schedule} bands={bands} weekdaysShort={weekdaysShort} onDayClick={(d) => openDialog(d)} />
       )}
       {view === "trimestre" && (
-        <QuarterView refDate={refDate} schedule={schedule} onDayClick={(d) => { setRefDate(d); setView("dia"); }} />
+        <QuarterView refDate={refDate} schedule={schedule} months={months} weekdaysShort={weekdaysShort} onDayClick={(d) => { setRefDate(d); setView("dia"); }} />
       )}
       {view === "dia" && (
         <DayWeekView
           days={[{
             ...refDate,
-            label: WEEKDAY_NAMES[new Date(refDate.year, refDate.month, refDate.day).getDay()].slice(0, 3),
+            label: weekdaysLong[new Date(refDate.year, refDate.month, refDate.day).getDay()].slice(0, 3),
             isToday: sameDay(refDate, now),
           }]}
           schedule={schedule}
@@ -382,7 +397,7 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
         <DayWeekView
           days={weekDates(refDate.year, refDate.month, refDate.day).map((d) => ({
             ...d,
-            label: WEEK_DAYS[new Date(d.year, d.month, d.day).getDay()],
+            label: weekdaysShort[new Date(d.year, d.month, d.day).getDay()],
             isToday: sameDay(d, now),
           }))}
           schedule={schedule}
@@ -392,9 +407,9 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
       )}
 
       <div className="flex flex-wrap items-center gap-4 mt-4 px-1">
-        {Object.entries(TYPE_META).map(([label, meta]) => (
-          <span key={label} className="flex items-center gap-1.5 font-mono text-[11px]" style={{ color: pal.creamDim }}>
-            <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} /> {label}
+        {Object.entries(TYPE_META).map(([key, meta]) => (
+          <span key={key} className="flex items-center gap-1.5 font-mono text-[11px]" style={{ color: pal.creamDim }}>
+            <span className="w-2.5 h-2.5 rounded-full" style={{ background: meta.color }} /> {t(`enums.type.${key}`)}
           </span>
         ))}
         <span className="w-px h-3" style={{ background: pal.line }} />
@@ -402,7 +417,7 @@ export function AgendaTab({ box, bands, schedule, setSchedule }) {
           const Icon = meta.icon;
           return (
             <span key={key} className="flex items-center gap-1.5 font-mono text-[11px]" style={{ color: meta.color }}>
-              <Icon size={11} /> {meta.label}
+              <Icon size={11} /> {t(`enums.scope.${key}`)}
             </span>
           );
         })}

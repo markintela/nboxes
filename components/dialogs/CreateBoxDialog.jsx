@@ -6,9 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AmberButton } from "@/components/Chrome";
 import { pal } from "@/lib/theme";
+import { useLanguage } from "@/lib/i18n/LanguageContext";
 import { createClient } from "@/lib/supabase/client";
 
 export function CreateBoxDialog({ open, onOpenChange, userId, onCreated }) {
+  const { t } = useLanguage();
   const [form, setForm] = useState({ complexName: "", complexNumber: "", boxNumber: "", boxName: "" });
   const [saving, setSaving] = useState(false);
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
@@ -36,7 +38,7 @@ export function CreateBoxDialog({ open, onOpenChange, userId, onCreated }) {
       onOpenChange(false);
     } else {
       // eslint-disable-next-line no-alert
-      alert(`Erro ao criar box: ${error.message}`);
+      alert(`${t("createBox.error")}: ${error.message}`);
     }
   };
 
@@ -44,30 +46,30 @@ export function CreateBoxDialog({ open, onOpenChange, userId, onCreated }) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent style={{ background: pal.panel, borderColor: pal.line, color: pal.cream }}>
         <DialogHeader>
-          <DialogTitle className="font-display" style={{ color: pal.amber }}>Nova box</DialogTitle>
+          <DialogTitle className="font-display" style={{ color: pal.amber }}>{t("createBox.dialogTitle")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3 mt-2">
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nome do complexo</Label>
-            <Input value={form.complexName} onChange={set("complexName")} placeholder="Ex: Complexo Distrito Sonoro" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("createBox.complexNameLabel")}</Label>
+            <Input value={form.complexName} onChange={set("complexName")} placeholder={t("createBox.complexNamePlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nº do complexo</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("createBox.complexNumberLabel")}</Label>
               <Input value={form.complexNumber} onChange={set("complexNumber")} placeholder="04" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
             </div>
             <div>
-              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nº da box</Label>
+              <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("createBox.boxNumberLabel")}</Label>
               <Input value={form.boxNumber} onChange={set("boxNumber")} placeholder="12" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
             </div>
           </div>
           <div>
-            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Nome da box</Label>
-            <Input value={form.boxName} onChange={set("boxName")} placeholder="Ex: Porão do Trovão" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+            <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>{t("createBox.boxNameLabel")}</Label>
+            <Input value={form.boxName} onChange={set("boxName")} placeholder={t("createBox.boxNamePlaceholder")} style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
           </div>
         </div>
         <DialogFooter className="mt-4">
-          <AmberButton onClick={submit}>{saving ? "Criando..." : "Criar box"}</AmberButton>
+          <AmberButton onClick={submit}>{saving ? t("createBox.creating") : t("createBox.create")}</AmberButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>
