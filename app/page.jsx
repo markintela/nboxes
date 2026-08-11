@@ -1,20 +1,43 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Wallet, CalendarDays, MessageCircle, Chrome } from "lucide-react";
 import { pal } from "@/lib/theme";
 import { LogoBadgeAnimated } from "@/components/Logo";
 import { AmberButton, GhostButton } from "@/components/Chrome";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
 
 export default function LandingPage() {
-  const { user, loading, loginWithGoogle } = useAuth();
+  const { user, loading, loginWithGoogle, signUpWithEmail, signInWithEmail } = useAuth();
   const router = useRouter();
+
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [mode, setMode] = useState("signin");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const [needsConfirmation, setNeedsConfirmation] = useState(false);
 
   useEffect(() => {
     if (!loading && user) router.replace("/home");
   }, [loading, user, router]);
+
+  const submitEmail = async () => {
+    if (!email || !password) return;
+    setSubmitting(true);
+    setFormError("");
+    const { data, error } =
+      mode === "signup"
+        ? await signUpWithEmail(email, password, { emailRedirectTo: `${window.location.origin}/home` })
+        : await signInWithEmail(email, password);
+    setSubmitting(false);
+    if (error) { setFormError(error.message); return; }
+    if (mode === "signup" && !data.session) setNeedsConfirmation(true);
+  };
 
   return (
     <div className="min-h-screen w-full flex flex-col" style={{ background: pal.bg }}>
@@ -61,6 +84,54 @@ export default function LandingPage() {
               Criar conta com Google
             </GhostButton>
           </div>
+
+          {!showEmailForm ? (
+            <button
+              type="button"
+              onClick={() => setShowEmailForm(true)}
+              className="font-mono text-[11px] mt-4 hover:brightness-125"
+              style={{ color: pal.brass }}
+            >
+              Ou entra com email e palavra-passe
+            </button>
+          ) : (
+            <div className="w-full max-w-xs mt-6 rounded-md border p-5 text-left" style={{ borderColor: pal.line, background: pal.panel }}>
+              {needsConfirmation ? (
+                <p className="font-body text-xs" style={{ color: pal.creamDim }}>
+                  Enviámos um email de confirmação para <strong>{email}</strong>. Confirma a tua conta e depois
+                  entra com a mesma palavra-passe.
+                </p>
+              ) : (
+                <div className="space-y-3">
+                  <div>
+                    <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Email</Label>
+                    <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="o-teu-email@exemplo.com" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+                  </div>
+                  <div>
+                    <Label className="font-mono text-xs" style={{ color: pal.creamDim }}>Palavra-passe</Label>
+                    <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" style={{ background: pal.panel2, borderColor: pal.line, color: pal.cream }} />
+                  </div>
+                  {formError && (
+                    <p className="font-mono text-[11px]" style={{ color: pal.red }}>{formError}</p>
+                  )}
+                  <GhostButton onClick={submitEmail} className="w-full justify-center">
+                    {submitting ? "A processar…" : mode === "signup" ? "Criar conta" : "Entrar"}
+                  </GhostButton>
+                </div>
+              )}
+
+              {!needsConfirmation && (
+                <button
+                  type="button"
+                  onClick={() => { setMode(mode === "signup" ? "signin" : "signup"); setFormError(""); }}
+                  className="font-mono text-[11px] mt-4 w-full text-center hover:brightness-125"
+                  style={{ color: pal.brass }}
+                >
+                  {mode === "signup" ? "Já tens conta? Entrar" : "Ainda não tens conta? Criar conta"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
       <div className="border-t py-4 text-center font-mono text-[11px]" style={{ borderColor: pal.line, color: pal.brass }}>

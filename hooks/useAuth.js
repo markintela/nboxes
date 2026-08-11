@@ -32,9 +32,9 @@ export function useAuth() {
     });
   };
 
-  const signUpWithEmail = async (email, password) => {
+  const signUpWithEmail = async (email, password, options) => {
     const supabase = createClient();
-    return supabase.auth.signUp({ email, password });
+    return supabase.auth.signUp({ email, password, options });
   };
 
   const signInWithEmail = async (email, password) => {
